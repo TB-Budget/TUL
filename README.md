@@ -1,2 +1,4 @@
-# TUL
-Turbo Utilities Library
+# Turbo Utilities Library
+
+Библиотека вспомогательных функций и классов для Турбо9
+
