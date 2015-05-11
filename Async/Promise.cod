@@ -1,0 +1,46 @@
+--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+class inherited TUL.AsyncResult "Обработка асинхрнонного вызова через callback";
+
+inclass
+   func Create: Promise;
+    Result = inherited Create;
+    Result.timer1 = Timer.Create(Result);
+    Result.timer1.Ontimer = "Poll";
+  end;
+inobject
+  var timer1: Timer;
+  var callback: FuncObj;
+
+  proc then_ synonym AutoPoll(aCallback: FuncObj);
+    self.callback = aCallback;
+    self.timer1.active = True;
+  end;
+
+  proc Poll(T: Timer=nil);
+    if ready and self.callback <> nil then
+       self.callback.Call([self.Get]);
+       self.timer1.active = False;
+    end;
+  end;
+
+  proc Abort;
+    self.timer1.active = False;
+    inherited Abort;
+  end;
+end
