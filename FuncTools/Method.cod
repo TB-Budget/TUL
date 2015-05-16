@@ -63,7 +63,7 @@ InObject Public
     self.ResultType = self.myMeth.ResultType;
   end;
 
-  func Вызвать synonym Call(Params:Variant[]):Variant;
+  func Вызвать synonym Call(Params: Variant[] = []): Variant;
     if myMeth.Kind=2 then--MethodInfo.MethodKind("mkFunc") then
        if myObj = nil then
          Result=myMeth.CallFuncEx(myCla,Params);

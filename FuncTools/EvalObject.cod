@@ -16,17 +16,20 @@
 
 class inherited FuncObj "Evaluate применяемый к объекту";
 
-inclass
-  func CreateEx(functext: String):EvalObject;
+inclass public
+
+  func CreateEx(functext: String): EvalObject;
     Result = Create;
     Result.functext = functext;
   end;
+
 inobject private
-  var  functext:String;
+  var functext: String;
 
 inobject public
-  func Вызвать synonym Call(Params:Variant[]):Variant;
-    var MyObj:Object;
+
+  func Вызвать synonym Call(Params: Variant[] = []): Variant;
+    var MyObj: Object;
     MyObj = Params[1] as Object;
     return MyObj.Evaluate(self.functext);
   end;

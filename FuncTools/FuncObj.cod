@@ -23,7 +23,7 @@ inobject
    var ParamTypes[]: Variant;
    var ResultType: Variant;
 
-   func Вызвать synonym Call(Params:Variant[]):Variant;
+   func Вызвать synonym Call(Params: Variant[] = []): Variant;
      SetError(0, 'Абстрактный метод');
      return nil;
    end;
