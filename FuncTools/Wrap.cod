@@ -30,9 +30,20 @@ inobject
    func Вызвать synonym Call(Params:Variant[]):Variant;
    var i: Integer;
    var args: Variant[];
+   var SyncCall: Class;
+     try
+       SyncCall = FindClass('TUL.AsyncTools');
+     except
+       SyncCall = nil;
+     end;
+
      args = Params;
      for i = 1 .. LengthOfArray(Stack) do
-         args = [AsyncTools.SyncCall(Stack[i], args)];
+        if SyncCall <> nil then
+         args = [SyncCall.SyncCall(Stack[i], args)];
+        else
+         args = [Stack[i].Call(args)];
+        end;
      od;
      return args[1];
    end;
