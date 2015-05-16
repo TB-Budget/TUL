@@ -27,7 +27,7 @@ InClass Public
       Result.myObj = nil;
       Result.myCla = aObj;
     else
-      SetError(0, 'Type mismatch');
+      SetError(26, 'Type mismatch');
     end;
     Result.myMeth = Result.FindMethod(aMethodName);
   end;
@@ -40,9 +40,9 @@ InObject Private
 InObject Public
   func FindMethod(aMethodName: String): MethodInfo;
     var res: MemberInfo;
-    res = myCla.MemberByName(aMethodName);
+    res = myCla.ClassInfo.MemberByName(aMethodName);
     if res = nil then
-       SetError(0,"В классе '"+myObj.ClassName+"' метод '"+aMethodName+"' не найден");
+       SetError(0,"В классе '"+myCla.ClassName+"' метод '"+aMethodName+"' не найден");
     end;
     Result = res;
   end;
