@@ -19,32 +19,64 @@ class inherited FuncObj 'Метод как экземпляр функции';
 InClass Public
   func CreateEx(aObj: Variant; aMethodName: String):Method;
     --aObj - объект или класс
-    --TODO: проверять!
     Result = Create;
-    Result.myObj = aObj;
+    if varType(aObj) = varObject then
+       Result.myObj = aObj;
+       Result.myCla = Result.myObj.ClassType;
+    elsif varType(aObj) = varClass then
+      Result.myObj = nil;
+      Result.myCla = aObj;
+    else
+      SetError(0, 'Type mismatch');
+    end;
     Result.myMeth = Result.FindMethod(aMethodName);
   end;
 
 InObject Private
-  myObj:Variant;
+  myObj: Object;
+  myCla: Class;
   myMeth:MethodInfo;
 
 InObject Public
   func FindMethod(aMethodName: String): MethodInfo;
     var res: MemberInfo;
-    res = myObj.ClassInfo.MemberByName(aMethodName);
+    res = myCla.MemberByName(aMethodName);
     if res = nil then
        SetError(0,"В классе '"+myObj.ClassName+"' метод '"+aMethodName+"' не найден");
     end;
     Result = res;
   end;
 
+  proc LoadParams;
+    --Загрузка параметров функции
+    var i, ii: Integer;
+    var aType: TypeInfo;
+    var aName: String;
+    var aKind: MethodInfo.ParamKind;
+
+    ii = self.myMeth.ParamsCount;
+    for i = 1..ii do
+      self.myMeth.ParamInfo(i, aName, aType, aKind);
+      self.ParamList[i] = aName;
+      self.ParamTypes[i] = aType;
+    end;
+    self.ResultType = self.myMeth.ResultType;
+  end;
+
   func Вызвать synonym Call(Params:Variant[]):Variant;
     if myMeth.Kind=2 then--MethodInfo.MethodKind("mkFunc") then
-       Result=myMeth.CallFuncEx(myObj,Params);
+       if myObj = nil then
+         Result=myMeth.CallFuncEx(myCla,Params);
+       else
+         Result=myMeth.CallFuncEx(myObj,Params);
+       end;
     elsif myMeth.Kind=1 then--MethodInfo.MethodKind("mkProc") then
        try
-         myMeth.CallProcEx(myObj,Params);
+         if myObj = nil then
+            myMeth.CallProcEx(myCla,Params);
+         else
+            myMeth.CallProcEx(myObj,Params);
+         fi;
          Result=True;
        except
          Result=False;
