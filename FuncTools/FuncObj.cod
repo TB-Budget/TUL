@@ -14,11 +14,14 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class "Класс, описывающий объект функции";
+class "Класс, описывающий функцию как объект";
 
 inclass
 
 inobject
+   var ParamList[]: String;
+   var ParamTypes[]: Variant;
+   var ResultType: Variant;
 
    func Вызвать synonym Call(Params:Variant[]):Variant;
      SetError(0, 'Абстрактный метод');
