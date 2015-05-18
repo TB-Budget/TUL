@@ -28,7 +28,7 @@ inobject private
 
 inobject public
 
-  func Вызвать synonym Call(Params: Variant[] = []): Variant;
+  func Вызвать synonym Call(Params: Variant[]): Variant;
     var MyObj: Object;
     MyObj = Params[1] as Object;
     return MyObj.Evaluate(self.functext);
