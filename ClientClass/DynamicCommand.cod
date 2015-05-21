@@ -26,7 +26,7 @@ inobject
   var cb: TUL.FuncObj;
 
   proc OnDispatch;
-    cb.Call([]);
+    if cb <> nil: cb.Call(nil); fi;
   end;
 
   proc Register(ClassName: String);
@@ -34,12 +34,14 @@ inobject
     var commgr: CommandGroup;
     var  i, ii, y, yy: Integer;
     with Commands do
+      ii = GroupsCount;
       for i = 1 .. ii do
-        if Group[i] = 'Local':
+        if Group[i].Name = 'Local':
           with Group[i] do
             --Ищем группу заданного класса
+            yy = GroupsCount;
             for y = 1 .. yy do
-              if Group[y] = ClassName:
+              if Group[y].Name = ClassName:
                 commgr = Group[y];
                 Break;
               fi;
