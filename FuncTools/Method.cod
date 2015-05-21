@@ -32,6 +32,11 @@ InClass Public
     Result.myMeth = Result.FindMethod(aMethodName);
   end;
 
+  func CreateRTTI(aMethod: MethodInfo):Method;
+    Result = Create;
+    Result.myMeth = aMethod;
+  end;
+
 InObject Private
   myObj: Object;
   myCla: Class;
