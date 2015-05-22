@@ -17,46 +17,104 @@
 class inherited Command "Команда, вызывающая объект-функцию";
 
 inclass
-  func CreateEx(Callback: TUL.FuncObj): DynamicCommand;
+
+  -- Конструктор
+  func CreateEx(commName: String;  -- имя команды
+                commCaption: String;  -- отображение
+                Callback: TUL.FuncObj = nil; -- обработчик
+                commImage: Image = nil -- иконка
+                ): DynamicCommand;
+
     Result = inherited Create;
+    Result.Name = commName;
+    Result.Caption = commCaption;
     Result.cb = Callback;
+    if commImage <> nil: Result.Image = commImage; fi;
+  end;
+
+  -- Поиск зарегистрированной команды
+  func GetRegisteredCommand(commx: DynamicCommand): DynamicCommand;
+    var comm: Command;
+    var  i, ii, y, yy, z, zz: Integer;
+    with Commands do
+      ii = GroupsCount;
+      for i = 1 .. ii do
+        with Group[i] do
+          if Name = 'Local':
+            yy = GroupsCount;
+            for y = 1 .. yy do
+              if Group[y].Name = ClassName:
+                with Group[y] do
+                  zz = CommandsCount;
+                  for z = 1 .. zz do
+                    comm = Command[z];
+                    if comm is DynamicCommand:
+                      Result = comm as DynamicCommand;
+                      if Result = commx: return; else return nil; fi;
+                    fi;
+                  od;
+                end;
+              fi;
+            od;
+            break;
+          fi;
+        end;
+      od;
+    end;
   end;
 
 inobject
-  var cb: TUL.FuncObj;
+
+  var cb: TUL.FuncObj; -- обработчик
 
   proc OnDispatch;
     if cb <> nil: cb.Call(nil); fi;
   end;
 
-  proc Register(ClassName: String);
+  func Equal(commx: DynamicCommand): Logical;
+    if commx <> nil:
+      result = (commx.Name = self.Name) and
+               (commx.cb = self.cb);
+    fi;
+  end;
+
   -- Регистрирует команду в группе команд заданного класса
+  proc Register(ClassName: String);
     var commgr: CommandGroup;
     var  i, ii, y, yy: Integer;
     with Commands do
       ii = GroupsCount;
       for i = 1 .. ii do
-        if Group[i].Name = 'Local':
-          with Group[i] do
-            --Ищем группу заданного класса
+        with Group[i] do
+          -- Ищем группу заданного класса
+          if Name = 'Local':
             yy = GroupsCount;
             for y = 1 .. yy do
               if Group[y].Name = ClassName:
                 commgr = Group[y];
-                Break;
+                break;
               fi;
             od;
-           --Если ничего не нашли - создадим группу сами
+            -- Если ничего не нашли - создадим группу сами
             if commgr = nil:
               commgr = AddGroup(ClassName);
             fi;
-          end;
-          Break;
-        fi;
+            break;
+          fi;
+        end;
       od;
     end;
-    --Регистрируем команду
-    commgr.AddCommand(self);
+    commgr.AddCommand(self); -- регистрируем команду
+  end;
+
+  func IsRegistered: Logical;
+    return (ParentGroup <> nil);
+  end;
+
+  proc UnRegister;
+    if IsRegistered:
+      ParentGroup.DeleteCommand(ParentIndex);
+    fi;
   end;
 end
 

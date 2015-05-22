@@ -39,7 +39,7 @@ inobject
        MyParams[i0 + i] = Params[i];
      end;
 
-     OldFunc.Call(Params);
+     OldFunc.Call(MyParams);
    end;
 
 end
