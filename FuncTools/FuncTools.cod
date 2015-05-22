@@ -18,7 +18,7 @@ class "Библиотека функциональной идиоматики";
 
 inclass
   func Map(MyFunc: FuncObj; const Arg1: Variant[]): Variant[];
-    var i, j, ii: Integer;
+    var i, ii: Integer;
     ii = LengthOfArray(Arg1);
     for i = 1 .. ii do
         Result[i] = MyFunc.Call([Arg1[i]]);
@@ -26,9 +26,7 @@ inclass
   end;
 
   func Reduce(MyFunc: FuncObj; const Arg: Variant[]; Init: Variant = nil): Variant;
-    var i, j, ii: Integer;
-    ii = LengthOfArray(Arg);
-
+    var j: Integer;
     if varType(Init) = varNull then
       Result = Arg[1];
       j = 2;
@@ -36,20 +34,21 @@ inclass
       Result = Init;
       j = 1;
     end;
-
-    for i = j .. ii do
-        Result = MyFunc.Call([Result, Arg[i] ]);
+    while j <> -1 do
+       Result = MyFunc.Call([Result, Arg[j]]);
+       NextArrItem(Arg, j);
     end;
   end;
 
   func Filter(Condition: FuncObj; const InArray:Variant[]):Variant[];
-    var i, j, ii: Integer;
+    var i, j: Integer;
     var OutArray: Variant[];
-    ii = LengthOfArray(InArray);
+    i = 1;
     j = 1;
-    for i = 1 .. ii do
-      if Condition.Call([InArray[i] ]) then
+    while i <> -1 do   -- for i = 1 .. ii do
+      if Condition.Call([InArray[i]]) then
         OutArray[j] = InArray[i];
+        NextArrItem(InArray, i);
         j = j + 1;  --это быстрее чем каждый раз вычислять длину OutArray;
       end;
     end;
