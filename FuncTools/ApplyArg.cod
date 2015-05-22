@@ -30,7 +30,7 @@ inobject
 
    func Вызвать synonym Call(Params: Variant[]): Variant;
      var i0, i, ii: Integer;
-     var MyParams: Variant;
+     var MyParams[]: Variant;
      MyParams = KeptArgs;
      --Extend
      i0 = LengthOfArray(MyParams);
