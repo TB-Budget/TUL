@@ -38,7 +38,7 @@ InObject Public
       SetError(0,"Метод не найден, проверьте задание имени класса");
     end;
     self.myCla  = FindClass(sCl);
-    self.myMeth = self.FindMethod(aMethodName);
+    self.myMeth = self.FindMethod(sMe);
   end;
 
 end
