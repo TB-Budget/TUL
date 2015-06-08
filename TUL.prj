@@ -6,5 +6,6 @@
     <Group Name="FuncTools" Type="Classes" Disabled="False"/>
     <Group Name="Async" Type="Classes" Disabled="False"/>
     <Group Name="ClientClass" Type="Classes" Disabled="False"/>
+    <Group Name="ServClass" Type="Classes" Disabled="False"/>
   </Groups>
 </Project>
