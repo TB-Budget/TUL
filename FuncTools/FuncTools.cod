@@ -26,7 +26,7 @@ inclass
   end;
 
   func Reduce(MyFunc: FuncObj; const Arg: Variant[]; Init: Variant = nil): Variant;
-    var j: Integer;
+    var j, i, ii: Integer;
     if varType(Init) = varNull then
       Result = Arg[1];
       j = 2;
@@ -34,21 +34,21 @@ inclass
       Result = Init;
       j = 1;
     end;
-    while j <> -1 do
-       Result = MyFunc.Call([Result, Arg[j]]);
-       NextArrItem(Arg, j);
+    ii = LengthOfArray(Arg);
+    for i = j..ii do
+       Result = MyFunc.Call([Result, Arg[i]]);
     end;
   end;
 
-  func Filter(Condition: FuncObj; const InArray:Variant[]):Variant[];
+  func Filter(Condition: FuncObj; const InArray: Variant[]): Variant[];
     var i, j: Integer;
     var OutArray: Variant[];
-    i = 1;
+    i = NextArrItem(InArray, 0);
     j = 1;
     while i <> -1 do   -- for i = 1 .. ii do
       if Condition.Call([InArray[i]]) then
         OutArray[j] = InArray[i];
-        NextArrItem(InArray, i);
+        i = NextArrItem(InArray, i);
         j = j + 1;  --это быстрее чем каждый раз вычислять длину OutArray;
       end;
     end;
