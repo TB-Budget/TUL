@@ -1,0 +1,59 @@
+class inherited RefType "Ссылочный тип массива";
+
+inclass public
+
+inclass private
+
+  func DynamicCast(obj: Variant): Variant;
+    var arr: Variant[];
+    var i, ii: Integer;
+    if obj is List:
+      result = (obj as List);
+    elsif VarType(obj) = varArray:
+      arr = obj as Variant[];
+      result = List.Create;
+      ii = LengthOfArray(arr);
+      for i = 1 .. ii do
+        result.Add(arr[i]);
+      od;
+    elsif VarType(obj) = varNull:
+      result = List.Create;
+    else
+      SetError(0, 'Ошибка приведения типов!');
+    fi;
+  end;
+
+
+inobject public
+
+  func Item(index: Integer): Variant;
+    return (Get.Items[index]);
+  end;
+
+  proc Set(value: Variant);
+    _arr_value = DynamicCast(value) as List;
+  end;
+
+  func Get: Variant;
+    return (DynamicCast(_arr_value));
+  end;
+
+  func ToStr: String;
+    var locList: List;
+    var i, ii: Integer;
+    locList = DynamicCast(Get) as List;
+    result = '[';
+    ii = locList.Count;
+    for i = 1 .. ii do
+      result = result + "'" + Item(i).ToStr + "'";
+      if i <> ii: result = result + " ,"; fi;
+    od;
+    result = result + ']';
+  end;
+
+
+inobject private
+
+  _arr_value: List;
+
+end

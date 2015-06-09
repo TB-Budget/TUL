@@ -1,0 +1,37 @@
+class "Базовый тип ссылочных типов";
+
+inclass public
+
+  func New(value: Variant): RefType;
+    if self = RefType:
+      SetError(0, 'Абстрактный метод.');
+    fi;
+    result = Create;
+    result.Set(value);
+  end;
+
+inclass private
+
+  func DynamicCast(obj: Variant): Variant;
+  end;
+
+inobject public
+
+  proc Set(value: Variant);
+    _value = DynamicCast(value);
+  end;
+
+  func Get: Variant;
+    return (DynamicCast(_value));
+  end;
+
+  func ToStr: String;
+    return Str(Get);
+  end;
+
+
+inobject private
+
+  _value: Variant;
+
+end

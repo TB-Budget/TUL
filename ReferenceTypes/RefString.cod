@@ -1,0 +1,30 @@
+class inherited RefType "—сылочный тип строки";
+
+inclass public
+
+  func ConCat(values: RefString[]): RefString;
+    var i, ii: Integer;
+    result = New(nil as String);
+    ii = LengthOfArray(values);
+    for i = 1 .. ii do
+      result.Set(result.Get + values[i].Get);
+    od;
+  end;
+
+inclass private
+
+  func DynamicCast(obj: Variant): Variant;
+    return (obj as String);
+  end;
+
+inobject public
+
+  func Length: Integer;
+    return (System.Length(_value as String));
+  end;
+
+
+inobject private
+
+
+end
