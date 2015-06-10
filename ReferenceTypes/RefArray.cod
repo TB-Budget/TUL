@@ -20,12 +20,14 @@ inclass public
 
 inclass private
 
+  -- Приведение объекта к List
   func DynamicCast(obj: Variant): Variant;
     var arr: Variant[];
     var i, ii: Integer;
-    -- приводим к List
     result = List.Create;
-    if obj is List:
+    if obj is RefArray:
+      result.Assign((obj.Get as RefArray));
+    elsif obj is List:
       result.Assign(obj);
     elsif VarType(obj) = varArray:
       arr = obj as Variant[];
@@ -41,31 +43,37 @@ inclass private
 
 inobject public
 
-  func Count: Integer;
+  -- Текущий размер массива
+  func Length: Integer;
     return ((Get as List).Count);
   end;
 
-  proc SetItem(index: Integer; value: Variant);
-    (Get as List).Items[index] = value;
-  end;
-
-  func GetItem(index: Integer): Variant;
-    return ((Get as List).Items[index]);
-  end;
-
+  -- Добавить новый элемент массива в конец
   proc AddItem(value: Variant);
     (Get as List).Add(value);
   end;
 
+  -- Вставить новый элемент массива в позицию
   proc InsertItem(index: Integer; value: Variant);
     (Get as List).Insert(index, value);
   end;
 
+  -- Изменить элемент массива по индексу
+  proc SetItem(index: Integer; value: Variant);
+    (Get as List).Items[index] = value;
+  end;
+
+  -- Получить элемент массива по индексу
+  func GetItem(index: Integer): Variant;
+    return ((Get as List).Items[index]);
+  end;
+
+  -- Массив как строка
   func ToStr: String;
     var item_tmp: Variant;
     var i, ii: Integer;
     result = '[';
-    ii = Count;
+    ii = Length;
     for i = 1 .. ii do
       item_tmp = GetItem(i);
       result = result + if(item_tmp is RefType, (item_tmp as RefType).ToStr, Str(GetItem(i)));

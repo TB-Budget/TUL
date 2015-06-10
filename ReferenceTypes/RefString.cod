@@ -18,6 +18,7 @@ class inherited RefType "Ссылочный тип строки";
 
 inclass public
 
+  -- Конкантенация строк
   func ConCat(values: RefString[]): RefString;
     var i, ii: Integer;
     result = New(nil as String);
@@ -29,8 +30,8 @@ inclass public
 
 inclass private
 
+  -- Приведение объекта к String
   func DynamicCast(obj: Variant): Variant;
-    -- приводим к String
     if (obj is RefString):
       result = (obj.Get as String);
     elsif not (obj is String):
@@ -42,9 +43,16 @@ inclass private
 
 inobject public
 
+  -- Длинна строки
   func Length: Integer;
     return (System.Length(Get as String));
   end;
+
+  -- Строка в кавычках
+  func ToStr: String;
+    result = System.ToStr(inherited ToStr);
+  end;
+
 
 
 inobject private

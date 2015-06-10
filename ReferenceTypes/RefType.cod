@@ -18,6 +18,7 @@ class "Базовый тип ссылочных типов";
 
 inclass public
 
+  -- Конструктор для создания объекта ссылочного типа
   func New(value: Variant): RefType;
     if self = RefType:
       SetError(0, 'Абстрактный метод.');
@@ -28,19 +29,29 @@ inclass public
 
 inclass private
 
+  -- Конструктор (системный)
+  func Create: RefType; -- как private (конструктор заблокирован для пользователя)
+    result = inherited Create;
+  end;
+
+  -- Преобразует входящее значение в целевой тип
   func DynamicCast(obj: Variant): Variant;
+    -- используется как вирт. ф-я
   end;
 
 inobject public
 
+  -- Установка значения объекта
   proc Set(value: Variant);
     _value = DynamicCast(value);
   end;
 
+  -- Получение значения объекта
   func Get: Variant;
     return _value;
   end;
 
+  -- Строковое представление объекта (вирт.)
   func ToStr: String;
     return Str(Get);
   end;
@@ -48,6 +59,6 @@ inobject public
 
 inobject private
 
-  _value: Variant;
+  _value: Variant; -- значение объекта ( ! ИСПОЛЬЗОВАТЬ ИСКЛЮЧИТЕЛЬНО МЕТОДЫ GET и SET ! )
 
 end
