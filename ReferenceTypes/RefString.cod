@@ -30,7 +30,14 @@ inclass public
 inclass private
 
   func DynamicCast(obj: Variant): Variant;
-    return (obj as String);
+    -- приводим к String
+    if (obj is RefString):
+      result = (obj.Get as String);
+    elsif not (obj is String):
+      result = Str(obj);
+    else
+      result = obj;
+    fi;
   end;
 
 inobject public

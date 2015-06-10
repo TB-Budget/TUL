@@ -38,7 +38,7 @@ inobject public
   end;
 
   func Get: Variant;
-    return (DynamicCast(_value));
+    return _value;
   end;
 
   func ToStr: String;

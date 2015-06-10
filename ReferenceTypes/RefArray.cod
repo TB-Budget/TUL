@@ -23,46 +23,53 @@ inclass private
   func DynamicCast(obj: Variant): Variant;
     var arr: Variant[];
     var i, ii: Integer;
+    -- приводим к List
+    result = List.Create;
     if obj is List:
-      result = (obj as List);
+      result.Assign(obj);
     elsif VarType(obj) = varArray:
       arr = obj as Variant[];
-      result = List.Create;
       ii = LengthOfArray(arr);
       for i = 1 .. ii do
         result.Add(arr[i]);
       od;
-    elsif VarType(obj) = varNull:
-      result = List.Create;
-    else
-      SetError(0, 'Ошибка приведения типов!');
+    elsif VarType(obj) <> varNull:
+      result.Add(obj);
     fi;
   end;
 
 
 inobject public
 
-  func Item(index: Integer): Variant;
-    return (Get.Items[index]);
+  func Count: Integer;
+    return ((Get as List).Count);
   end;
 
-  proc Set(value: Variant);
-    _arr_value = DynamicCast(value) as List;
+  proc SetItem(index: Integer; value: Variant);
+    (Get as List).Items[index] = value;
   end;
 
-  func Get: Variant;
-    return (DynamicCast(_arr_value));
+  func GetItem(index: Integer): Variant;
+    return ((Get as List).Items[index]);
+  end;
+
+  proc AddItem(value: Variant);
+    (Get as List).Add(value);
+  end;
+
+  proc InsertItem(index: Integer; value: Variant);
+    (Get as List).Insert(index, value);
   end;
 
   func ToStr: String;
-    var locList: List;
+    var item_tmp: Variant;
     var i, ii: Integer;
-    locList = DynamicCast(Get) as List;
     result = '[';
-    ii = locList.Count;
+    ii = Count;
     for i = 1 .. ii do
-      result = result + "'" + Item(i).ToStr + "'";
-      if i <> ii: result = result + " ,"; fi;
+      item_tmp = GetItem(i);
+      result = result + if(item_tmp is RefType, (item_tmp as RefType).ToStr, Str(GetItem(i)));
+      if i <> ii: result = result + ", "; fi;
     od;
     result = result + ']';
   end;
@@ -70,6 +77,5 @@ inobject public
 
 inobject private
 
-  _arr_value: List;
 
 end
