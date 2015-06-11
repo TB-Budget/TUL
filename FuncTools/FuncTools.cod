@@ -48,9 +48,9 @@ inclass
     while i <> -1 do   -- for i = 1 .. ii do
       if Condition.Call([InArray[i]]) then
         OutArray[j] = InArray[i];
-        i = NextArrItem(InArray, i);
         j = j + 1;  --это быстрее чем каждый раз вычислять длину OutArray;
       end;
+      i = NextArrItem(InArray, i);
     end;
     Result = OutArray;
   end;
