@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<Properties Version="1"/>
+<Items>
+  <Item Name="RefType"/>
+  <Item Name="RefArray"/>
+  <Item Name="RefString"/>
+</Items>
