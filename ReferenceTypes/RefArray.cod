@@ -43,7 +43,7 @@ inclass private
 
 inobject public
 
-  -- Текущий размер массива
+  -- Длина массива
   func Length: Integer;
     return ((Get as List).Count);
   end;

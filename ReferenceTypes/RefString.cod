@@ -16,6 +16,14 @@
 
 class inherited RefType "Ссылочный тип строки";
 
+inclass private
+
+  external func lstrcmp(lpString1: String; lpString2: String): Integer; -- Compares two character strings. The comparison is case-sensitive.
+    library "kernel32" name "lstrcmpA";
+
+  external func lstrcmpi(lpString1: String; lpString2: String): Integer; -- Compares two character strings. The comparison is not case-sensitive.
+    library "kernel32" name "lstrcmpiA";
+
 inclass public
 
   -- Конкантенация строк
@@ -27,6 +35,22 @@ inclass public
       result.Set(result.Get + values[i].Get);
     od;
   end;
+
+  -- Сравнение двух заданных строк (с учетом или без учета регистра) и возвращает число:
+  --   Меньше нуля - Значение параметра strA меньше значения параметра strB.
+  --   Нуль        - Значения параметров strA и strB равны.
+  --   Меньше нуля - Значение strA больше значения strB.
+  func Compare(strA: Variant; strB: Variant; ignoreCase: Logical = true): Integer;
+    var valA, valB: String;
+    valA = DynamicCast(strA) as String;
+    valB = DynamicCast(strB) as String;
+    if ignoreCase:
+      return lstrcmpi(valA, valB);
+    else
+      return lstrcmp(valA, valB);
+    fi;
+  end;
+
 
 inclass private
 
@@ -43,16 +67,42 @@ inclass private
 
 inobject public
 
-  -- Длинна строки
-  func Length: Integer;
-    return (System.Length(Get as String));
-  end;
-
   -- Строка в кавычках
   func ToStr: String;
     result = System.ToStr(inherited ToStr);
   end;
 
+  -- Длина строки экземпляра
+  func Length: Integer;
+    return (System.Length(Get as String));
+  end;
+
+  -- Возвращает индекс первого вхождения значения указанной строки в данном экземпляре
+  func IndexOf(value: Variant; ignoreCase: Logical = true): Integer;
+    var val, val_self, val_part: String;
+    var p, pp, len: Integer;
+    val = DynamicCast(value) as String;
+    val_self = Get as String;
+    if ignoreCase:
+      return Pos(val, val_self);
+    else
+      len = System.Length(val);
+      val_part = val_self;
+      while true do
+        p = Pos(val, val_part);
+        if p > 0:
+          if lstrcmp(val, SubStr(val_part, p, len)) = 0:
+            return (pp + p);
+          else
+            val_part = SubStr(val_part, p + 1);
+            pp = pp + p;
+          fi;
+        else
+          return;
+        fi;
+      od;
+    fi;
+  end;
 
 
 inobject private
