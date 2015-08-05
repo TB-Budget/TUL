@@ -1,0 +1,107 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited FuncObj "Сравнение двух вариантов насколько это возможно";
+
+inclass
+  var one: Compare.Rich;
+  func Single: Compare.Rich;
+    if one = nil then
+       one = Create;
+    end;
+    Result = one;
+  end;
+inobject private
+
+  func Сравнить synonym Compare, cmp (X: Variant; Y: Variant): Integer;
+    var i, ii, k: Integer;
+    var Xa, Ya: Variant[];
+    if varType(X) < varObject  and varType(Y) < varObject  then
+      if varType(X) = varType(Y) then
+        -- Тривиальное сравнение скаляров
+        if X = Y then
+          return 0;
+        elsif X > Y then
+          return 1;
+        else
+          return -1;
+        end;
+      else
+        -- В качестве хоть какого-то сравнения разнородных скаляров - сравниваем типы
+        if varType(X) > varType(Y) then
+          return 1;
+        else
+          return -1;
+        fi;
+      end;
+    elsif varType(X) = varObject or varType(Y) = varObject  then
+      -- Сравнение объектов или объекта с чем попало
+      if X = Y then
+        -- Перегрузка равенства обеспечена Турбо9
+        return 0;
+      end;
+      -- TODO: проверять на возможность сравнения разнородных
+      if X.ClassInfo.MemberByName("LessThan") <> nil:
+        if X.LessThan(Y) then
+          return -1;
+        else
+          return 1;
+        end;
+      elsif Y.ClassInfo.MemberByName("LessThan") <> nil:
+        if Y.LessThan(X) then
+          return 1;
+        else
+          return -1;
+        end;
+      elsif X.ClassInfo.MemberByName("GreaterThan") <> nil:
+        if X.GreaterThan(Y) then
+          return 1;
+        else
+          return -1;
+        end;
+      elsif Y.ClassInfo.MemberByName("GreaterThan") <> nil:
+        if Y.GreaterThan(X) then
+          return -1;
+        else
+          return 1;
+        end;
+      else
+        SetError(0, "Несравнимые типы");
+      fi;
+    elsif varType(X) = varArray and varType(Y) = varArray  then
+      Xa = X as Variant[];
+      Ya = Y as Variant[];
+      -- сравнение массивов
+      ii = Min([LengthOfArray(Xa), LengthOfArray(Ya)]);
+      for i = 1 .. ii do
+        k = cmp(Xa[i], Ya[i]);
+        if k <> 0 then
+           return k;
+        end;
+      end;
+      -- Все элементы на общей длине равны, больше тот кто длиннее
+      Return cmp(LengthOfArray(Xa), LengthOfArray(Ya));
+    else
+      SetError(0, "Несравнимые типы");
+    end;
+    Result = 0;
+  end;
+
+  func Call(Params: Variant[]): Variant;
+    Return cmp(Params[1], Params[2]);
+  end;
+
+end
