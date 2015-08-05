@@ -1,0 +1,52 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited Итераторы.Итератор "Итератор, фильтрующий итератор" synonym Filter;
+
+inclass
+  func New(Condition: FuncObj; const InIter: Variant): Итераторы.Фильтр;
+    Result = Create;
+    if varType(InIter) = varArray then
+       Result.InIter = Итераторы.OnArrayDense.CreateEx(InIter);
+    else
+       Result.InIter = InIter;
+    end;
+    Result.Condition = Condition;
+  end;
+
+inobject
+  var InIter: UserObject;
+  var Condition: FuncObj;
+  func Текущий synonym Current: Variant;
+     return InIter.Current;
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+     while InIter.MoveNext do
+       if Condition.Call([InIter.Current]) then
+         return True;
+       end;
+     end;
+     return False;
+  end;
+
+  func Сброс synonym Reset: Logical;
+     InIter.Reset;
+  end;
+
+end

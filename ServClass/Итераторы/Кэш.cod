@@ -1,0 +1,76 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited Итераторы.Итератор "Кеширующий итератор" synonym Cache;
+
+inclass
+  func New(Iter:Object): Итераторы.Cache;
+    Result = Create;
+    result.myIter = Iter;
+    Result.inpos = 0;
+    Result.outpos = 0;
+  end;
+
+inobject
+  var myIter: Object;
+  var inpos: Integer;
+  var outpos: Integer;
+  var CacheData: Variant[];
+
+  func GetCache(upto:Integer): Logical;
+    var i: Integer;
+    for i = inpos + 1 .. upto do
+      if myIter.MoveNext then
+        CacheData[i] = myIter.Current;
+        inpos = i;
+      else
+        return False;
+      fi;
+    od;
+    return True;
+  end;
+
+  func Item(i: Integer):Variant;
+    if i > inpos then
+       if not GetCache(i) then
+         return nil;
+       end;
+    end;
+    Result = CacheData[i];
+  end;
+
+  func Текущий synonym Current: Variant;
+     return CacheData[outpos];
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+     outpos = outpos + 1;
+     return Getcache(outpos);
+  end;
+
+  func Сброс synonym Reset: Logical;
+     -- Переводит указатель на первый элемент и возвращает Истина
+     -- Если это невозможно (элемента нет или итератор "неперематываемый"),
+     -- то возвращает Ложь
+     outpos = 0;
+     return True;
+  end;
+
+
+
+end
