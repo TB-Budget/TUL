@@ -20,7 +20,7 @@ inclass
   func New(Condition: FuncObj; const InIter: Variant): Итераторы.Фильтр;
     Result = Create;
     if varType(InIter) = varArray then
-       Result.InIter = Итераторы.OnArrayDense.CreateEx(InIter);
+       Result.InIter = Итераторы.OnArrayDense.New(InIter as Variant[]);
     else
        Result.InIter = InIter;
     end;
