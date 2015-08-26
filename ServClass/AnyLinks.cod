@@ -1,0 +1,124 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class "Инструментарий работы с сохранением в базу произвольных объектов";
+
+inclass private
+  catalog: Link2Kind[];
+
+inclass public
+  proc Register(Kind: String; Class_: Class = nil;
+                IniFunc: FuncObj = nil; KeepFunc: FuncObj; LoadFunc: FuncObj);
+    var one: Link2Kind;
+    one = Link2Kind.Create;
+    --Обязательные параметры
+    one.Name = Kind;
+    one.KeepFunc = KeepFunc;
+    one.LoadFunc = LoadFunc;
+    --если функция не сериализуется это лучше узнать сейчас, а не при сохранении
+    one.LoadFuncS = SerTools.SerObj(LoadFunc);
+
+    one.IniFunc = KeepFunc;
+    one.Class_ = Class_;
+    one.IniFunc = IniFunc;
+  end;
+
+  func MakeNew(Kind: string; Args: variant[] = nil): variant;
+    var Iter: Итераторы.Итератор;
+    Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Name"),
+                                              Compare.eq.New(Kind)),
+                                catalog);
+    if Iter.MoveNext then
+       return Iter.Current.MakeNew(Args);
+    else
+       return nil;
+    end;
+  end;
+
+  func SaveObj(Obj: variant; Kind: string = ''): Link2Any;
+    var Iter: Итераторы.Итератор;
+    var Args: Variant[];
+    var i, ii: Integer;
+    var arg: Link2Any.Args;
+    if Kind = '' then
+      Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Class_"),
+                                                Compare.eq.New(Obj.ClassType)),
+                                  catalog);
+    else
+      Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Name"),
+                                                Compare.eq.New(Kind)),
+                                  catalog);
+    end;
+    if Iter.MoveNext then
+       Args = Iter.Current.KeepFunc([Obj]);
+       result = Link2Any.Create;
+       result.Edit;
+       result.Kind = Iter.Current.Name;
+       result.FuncObj = Iter.Current.FuncObjS;
+       ii = LengthOfArray(Args);
+       for i = 1..ii do
+         arg = result.Args.Insert(i);
+         arg.ArgType = VarType(Args[i]);
+         if arg.ArgType = varString then
+           arg.ArgString = Args[i];
+         elsif arg.ArgType = varInt then
+           arg.ArgInt = Args[i];
+         elsif arg.ArgType = varNumeric then
+           arg.ArgNum = Args[i];
+         elsif arg.ArgType = varLogical then
+           arg.ArgBool = Args[i];
+         elsif arg.ArgType = varDate then
+           arg.ArgDate = Args[i];
+         -- !!! TODO: сделать упаковку объектов
+         else
+           SetError(0, "Unable to save argument");
+         end;
+       end;
+       result.Post;
+    else
+       return nil;
+    end;
+  end;
+
+
+  func LoadObj(link: Link2Any): Variant;
+    var Args: Variant[];
+    var i, ii: Integer;
+    var myFunc: FuncObj;
+    ii = link.Args.Count;
+    for i = 1..ii do
+      if link.Args[i].ArgType = varString then
+        Args[i] = link.Args[i].ArgString;
+      elsif link.Args[i].ArgType = varInt then
+        Args[i] = link.Args[i].ArgInt;
+      elsif link.Args[i].ArgType = varNumeric then
+        Args[i] = link.Args[i].ArgNum;
+      elsif link.Args[i].ArgType = varLogical then
+        Args[i] = link.Args[i].ArgBool;
+      elsif link.Args[i].ArgType = varDate then
+        Args[i] = link.Args[i].ArgDate;
+      elsif link.Args[i].ArgType = varObject then
+        Args[i] = link.Args[i].ArgRef;
+        if link.Args[i].refLoad and Args[i] is Link2Any then
+          Args[i] =  LoadObj(Args[i]);
+        end;
+      end;
+    end;
+    myFunc = SerTools.UnSerObj(link.FuncObj);
+    Result = myFunc.Call(Args);
+  end;
+
+end
