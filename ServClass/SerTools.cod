@@ -14,31 +14,43 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class inherited Method 'Метод класса как экземпляр функции';
+class "Методы запаковки/распаковки через текстовое представление";
 
-InClass Public
-  func CreateExS(aMethodName :String):ClassMeth;
-    Result = FromString(aMethodname);
-  end;
+inclass
+   func SerObj(obj: Object):String;
+     if obj.inheritsfrom(record) then
+       Result = obj.DocIDStr;
+     elsif obj.ClassInfo.MemberByName("ToString")<>nil and
+           obj.ClassInfo.MemberByName("FromString")<>nil then
+       Result = "{";
+       Result = Result + obj.ClassProject + "." + obj.ClassName;
+       result = Result + ":";
+       result = Result + obj.ToString;
+       Result = Result + "}";
+     else
+       SetError(26, "Cannot serialize object");
+     end;
+   end;
 
-  func ИзСтроки synonym FromString(aMethodName :String):ClassMeth;
-  var i:Integer;
-  var sCl,sMe:String;
-    Result = Create;
-    i = WordsCount(aMethodName, '.');
-    sMe = ExtractWord(aMethodName, i, '.');
-    sCl = SubStr(aMethodName, 1, Length(aMethodName) - Length(sMe) - 1);
-    if sCl = '' then 
-      SetError(0,"Метод не найден, проверьте задание имени класса");
-    end;
-    Result.myCla  = FindClass(sCl);
-    Result.myMeth = Result.FindMethod(sMe);
-  end;
-
-InObject Public
-  func ToString: String;
-    Result = myCla.ClassProject + "." + myCla.ClassName + "." + myMeth.Name;
-  end;
-
+   func UnSerObj(ser: String):Object;
+     var L, P: Integer;
+     var myCla: Class;
+     if Substr(ser, 1, 1) <> '{' then
+       SetError(92, "{ expected at start of object representation");
+     end;
+     L = Length(ser);
+     if Substr(ser, L, 1) <> '}' then
+       SetError(93, "} expected at end of object representation");
+     end;
+     P = CharPos(":", ser);
+     myCla = FindClass(Substr(ser, 2, P - 2));
+     if myCla.inheritsfrom(Record) then
+       return Record.Load(ser);
+     end;
+     if myCla.ClassInfo.MemberByName("FromString") <> nil then
+        return myCla.FromString(Substr(ser, P+1, L-P-1));
+     end;
+   end;
+inobject
 
 end
