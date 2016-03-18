@@ -1,0 +1,108 @@
+﻿class inherited Итераторы.Итератор "Базовый класс ввода-вывода";
+
+inclass
+
+inobject
+--{ Описание возможноситей
+  func Readable:Logical;
+    Result = False;
+  end;
+
+  func Writable:Logical;
+    Result = False;
+  end;
+
+  func Seekable:Logical;
+    Result = False;
+  end;
+
+  func MaxRead:Integer;
+    Result = 32000;
+  end;
+  --}
+
+  --{ Прототипы методов
+  proc flush;
+    --Сбросить данные на диск
+    --SetError(0, 'Абстрактный метод');
+  end;
+
+  proc close;
+    --Закончить работу с потоком
+    self.flush;
+    --SetError(0, 'Абстрактный метод');
+  end;
+
+  func closed:Logical;
+    --Поток закрыт и не может быть использован
+    Result = False;
+  end;
+
+  func EOF:Logical;
+    --Достигнут конец данных
+    SetError(0, 'Абстрактный метод');
+    Result = false;
+  end;
+
+  func seek(offset:Integer; origin:Integer=0):Integer;
+  -- offset - позиция
+  -- origin - откуда считаем позицию
+  --    0 – с начала потока, позиция положительная
+  --    1 – от текущей позиции
+  --    2 - с конца потока, позиция отрицательная
+  -- возвращает позицию с начала; может использоваться (0, 1) для определения позиции
+    SetError(0, 'Абстрактный метод');
+    Result = offset;
+  end;
+
+  func read(limit:Integer=-1):String;
+    SetError(0, 'Абстрактный метод');
+    Result = '';
+  end;
+
+  func readln(limit:Integer=-1):String;
+    SetError(0, 'Абстрактный метод');
+    Result = '';
+  end;
+
+  proc write(value:String);
+    SetError(0, 'Абстрактный метод');
+  end;
+
+  proc writelines(lines:Итераторы.Итератор; endline:String=chr(13)+chr(10));
+    while lines.MoveNext do
+      self.write(lines.current+endline);
+    end;
+  end;
+  --}
+
+  --{Интерфейс итератора
+  var current_: String;
+  func Текущий synonym Current: Variant;
+     -- Возвращает текущий элемент итератора
+     return self.current;
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+     self.current_ = self.readln;
+     return self.EOF and self.current<>nil;
+  end;
+
+  func Сброс synonym Reset: Logical;
+     -- Переводит указатель на "пред-первый" элемент и возвращает Истина
+     -- То есть после следующего MoveNext будет доступен первый элемент
+     -- Если это невозможно (итератор "неперематываемый") - возвращает Ложь
+     if Seekable then
+        self.seek(0, 0);
+        self.current_ = nil;
+        return True;
+     else
+        return False;
+     end;
+
+  end;
+
+  --}
+end
