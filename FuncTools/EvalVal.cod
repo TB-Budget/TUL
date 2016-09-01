@@ -18,7 +18,7 @@ class inherited FuncObj "Evaluate применяемый к переменной
 
 inclass public
 
-  func CreateEx(functext: String): EvalVal;
+  func New synonym CreateEx(functext: String): EvalVal;
     Result = Create;
     Result.functext = functext;
   end;

@@ -24,7 +24,6 @@ inclass
     end;
     Result = one;
   end;
-inobject private
 
   func Сравнить synonym Compare, cmp (X: Variant; Y: Variant): Integer;
     var i, ii, k: Integer;
@@ -100,6 +99,7 @@ inobject private
     Result = 0;
   end;
 
+inobject
   func Call(Params: Variant[]): Variant;
     Return cmp(Params[1], Params[2]);
   end;

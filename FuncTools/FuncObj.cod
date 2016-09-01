@@ -27,4 +27,8 @@ inobject
      SetError(0, 'Абстрактный метод');
      return nil;
    end;
+
+   func Вызвать1 synonym Call1, CallOne(Param: Variant): Variant;
+     Result = self.Call([Param]);
+   end;
 end

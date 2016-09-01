@@ -17,7 +17,7 @@
 class inherited FuncObj "Функция с частично сохраненными аргументами";
 
 inclass
-  func CreateEx(OldFunc: Tul.FuncObj; Args: Variant[]): ApplyArg;
+  func New synonym CreateEx(OldFunc: Tul.FuncObj; Args: Variant[]): ApplyArg;
     Result = inherited Create;
     Result.KeptArgs = Args;
     Result.OldFunc = OldFunc;

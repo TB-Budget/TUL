@@ -1,4 +1,4 @@
-﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2016
 
 --Данный проект является свободным программным обеспечением. Вы вправе распространять его
 --и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
@@ -14,38 +14,22 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class inherited FuncObj "Последовательное применение функций (декаррирование)";
+
+class inherited FuncObj "Приведение объекта реализующего метод Call к типу FuncObj";
 
 inclass
-  func New synonym CreateEx(first: FuncObj; second: FuncObj=nil): Wrap;
+  func New(MyObj: Object): DuckFuncObj;
     Result = Create;
-    result.Stack[1] = first;
-    if second <> nil then
-       result.Stack[2] = second;
-    end;
+    Result.TrueObj = MyObj;
+    --TODO: сделать проверку через RTTI
   end;
-inobject
-   var Stack[]: FuncObj;
 
-   func Вызвать synonym Call(Params:Variant[]):Variant;
-   var i: Integer;
-   var args: Variant[];
-   var SyncCall: Class;
-     try
-       SyncCall = FindClass('TUL.AsyncTools');
-     except
-       SyncCall = nil;
-     end;
+inobject private
+    TrueObj: Object;
 
-     args = Params;
-     for i = 1 .. LengthOfArray(Stack) do
-        if SyncCall <> nil then
-         args = [SyncCall.SyncCall(Stack[i], args)];
-        else
-         args = [Stack[i].Call(args)];
-        end;
-     od;
-     return args[1];
+inobject public
+   func Вызвать synonym Call(Params: Variant[]): Variant;
+     return TrueObj.Call(Params);
    end;
 
 end

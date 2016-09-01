@@ -18,14 +18,9 @@ class inherited FuncObj "Evaluate применяемый к объекту";
 
 inclass public
 
-  func New(functext: String): EvalObject;
+  func New synonym CreateEx(functext: String): EvalObject;
     Result = Create;
     Result.functext = functext;
-  end;
-
-  func CreateEx(functext: String): EvalObject;
-    --compat
-    Result = New(functext);
   end;
 
 inobject private

@@ -17,7 +17,7 @@
 class inherited FuncObj 'Метод как экземпляр функции';
 
 InClass Public
-  func CreateEx(aObj: Variant; aMethodName: String):Method;
+  func New synonym CreateEx(aObj: Variant; aMethodName: String):Method;
     --aObj - объект или класс
     Result = Create;
     if varType(aObj) = varObject then
