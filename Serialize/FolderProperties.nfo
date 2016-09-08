@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Properties Version="1">
+  <Property Name="Title" Value="Упаковка/распаковка данных"/>
   <Property Name="CalcSrv" Value="False"/>
   <Property Name="ProcSrv" Value="True"/>
 </Properties>
