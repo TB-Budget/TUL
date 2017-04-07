@@ -14,7 +14,7 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class inherited FuncObj "Последовательное применение функций (декаррирование)";
+class inherited FuncObj "Последовательное применение функций (композиция функций)";
 
 inclass
   func New synonym CreateEx(first: FuncObj; second: FuncObj=nil): Wrap;
@@ -38,11 +38,11 @@ inobject
      end;
 
      args = Params;
-     for i = 1 .. LengthOfArray(Stack) do
+     for i = 1 .. LengthOfArray(self.Stack) do
         if SyncCall <> nil then
-         args = [SyncCall.SyncCall(Stack[i], args)];
+         args = [SyncCall.SyncCall(self.Stack[i], args)];
         else
-         args = [Stack[i].Call(args)];
+         args = [self.Stack[i].Call(args)];
         end;
      od;
      return args[1];

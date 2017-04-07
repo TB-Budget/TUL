@@ -33,9 +33,11 @@ inobject
   end;
 
   proc Poll(T: Timer=nil);
-    if ready and self.callback <> nil then
-       self.callback.Call([self.Get]);
-       self.timer1.active = False;
+    if ready then
+      if self.callback <> nil then
+        self.callback.Call([self.Get]);
+      fi;
+      self.timer1.active = False;
     end;
   end;
 
