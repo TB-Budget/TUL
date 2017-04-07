@@ -82,13 +82,16 @@ inclass
     var esc, char: String;
     var uni: Integer;
     var content, terminator: String;
+
+    var cut_pos: Integer;
     --begin = end_ - 1;
     while true do
-        end_ = CharPos('"\', s);
+        cut_pos = end_;
+        end_ = CharPos('"\', s, end_);
         if end_ < 1:
            SetError(9901, "Невозможно распаковать JSON-значение");
         fi;
-        content = Substr(s,1,end_);
+        content = Substr(s, cut_pos, end_ - cut_pos );
         terminator = Substr(s,end_,1);
         -- Content is contains zero or more unescaped string characters
         if content <> "":
@@ -99,6 +102,7 @@ inclass
         if terminator = '"':
             break;
         elsif terminator = '\':
+          end_ = end_ + 1;
           esc = Substr(s, end_, 1);
           if esc = "" then
              SetError(9905, "Нетерминированная строка");
@@ -132,7 +136,7 @@ inclass
         -- Append the unescaped character
         res = res + char;
     od;
-    return [res, end_];
+    return [res, end_ + 1];
   end;
 
   func parse_object(s: String;
@@ -170,7 +174,7 @@ inclass
         if Substr(s, end_, 1) <> ':':
             end_ = CharPos(whitespaces, Substr(s, end_ + 1, Length(s))) + end_+1;
             if Substr(s, end_, 1) <> ':':
-                SetError(9916, "Expecting ':' delimiter" + s);
+                SetError(9916, "Expecting ':' delimiter" + Substr(s, end_ - 2, 10));
             fi;
         fi;
         end_ = end_ + 1;
@@ -182,6 +186,9 @@ inclass
         pair = scan(s, end_);
         value = pair[1];
         end_ = pair[2];
+        if Lo(key) in ["count", "items"] then
+          key = "_" + key;
+        end;
         res.SetField(key, value);
 
         nextchar = Substr(s, end_, 1);
@@ -194,7 +201,7 @@ inclass
         if nextchar = '}':
             break;
         elsif nextchar <> ',':
-            SetError(9918, "Expecting ',' delimiter" +  s);
+            SetError(9918, "Expecting ',' delimiter" +  Substr(s, end_ - 2, 10));
         fi;
 
         nextchar = Substr(s, end_, 1);
@@ -205,7 +212,7 @@ inclass
         end_ = end_ + 1;
 
         if nextchar <> '"':
-           SetError(9918, "Expecting '"+'"'+"' delimiter" +  s);
+           SetError(9918, "Expecting '"+'"'+"' delimiter" +  Substr(s, end_ - 2, 10));
         fi;
     od;
     return [res, end_];
@@ -217,6 +224,8 @@ inclass
   var value: Variant;
   var pair: Variant[];
   var nextchar: String;
+  var res_ :variant[];
+
     values = [];
     nextchar = Substr(s, end_, 1);
     if trim(nextchar) = '':
@@ -241,13 +250,15 @@ inclass
         if nextchar = ']':
             break;
         elsif nextchar <> ',':
-            SetError(9918, "Expecting ',' delimiter" +  s);
+            SetError(9918, "Expecting ',' delimiter" +  Substr(s, end_ - 2, 10));
         fi;
         if trim(Substr(s, end_, 1)) = '':
            end_ = CharPos(whitespaces, Substr(s, end_ + 1, Length(s))) + end_+1;
         fi;
     od;
-    return [values, end_];
+    res_[1] = values;
+    res_[2] = end_;
+    return res_;
   end;
 
   func parse_number(s: String;
@@ -255,6 +266,7 @@ inclass
     var int_: String;
     var frac_: String;
     var exp_: String;
+    var res_: Variant[];
 
     while Substr(s, end_, 1) in digits do
       int_ = int_ + Substr(s, end_, 1);
@@ -275,7 +287,13 @@ inclass
         end_ = end_ + 1;
       end;
     end;
-    return [Num(int_+"."+frac_) * Power(10,int(exp_)), end_];
+    if exp_ = '' then
+       exp_ = '0';
+    end;
+
+    res_[1] = Num(int_+"."+frac_) * Power(10,int(exp_));
+    res_[2] = end_;
+    return res_;
   end;
 
 
