@@ -234,7 +234,9 @@ inclass
     fi;
     -- Look-ahead for trivial empty array
     if nextchar = ']':
-        return [values, end_ + 1];
+        res_[1] = values;
+        res_[2] = end_ + 1;
+        return res_;
     fi;
     while True do
         pair = scan(s, end_);
