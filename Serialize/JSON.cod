@@ -180,7 +180,7 @@ inclass
         end_ = end_ + 1;
 
         if trim(Substr(s, end_, 1)) = '':
-           end_ = CharPos(whitespaces, Substr(s, end_ + 1, Length(s))) + end_+1;
+           end_ = CharPos(whitespaces, Substr(s, end_ + 1, Length(s))) + end_ + 1;
         fi;
 
         pair = scan(s, end_);
@@ -265,16 +265,23 @@ inclass
 
   func parse_number(s: String;
                     end_:Integer):Variant[];
+    var sig: Integer;
     var int_: String;
     var frac_: String;
     var exp_: String;
     var res_: Variant[];
-
+    if Substr(s, end_, 1) = '-' then
+       sig = -1;
+       end_ = end_ + 1;
+    else
+       sig = 1;
+    end;
     while Substr(s, end_, 1) in digits do
       int_ = int_ + Substr(s, end_, 1);
       end_ = end_ + 1;
     end;
     if Substr(s, end_, 1) = '.' then
+      end_ = end_ + 1;
       while Substr(s, end_, 1) in digits do
         frac_ = frac_ + Substr(s, end_, 1);
         end_ = end_ + 1;
@@ -293,7 +300,7 @@ inclass
        exp_ = '0';
     end;
 
-    res_[1] = Num(int_+"."+frac_) * Power(10,int(exp_));
+    res_[1] = sig * Num(int_+"."+frac_) * Power(10,int(exp_));
     res_[2] = end_;
     return res_;
   end;
@@ -317,8 +324,10 @@ inclass
        return [False, idx + 5];
      elsif nextchar = '[':
        return parse_array(JSON, idx + 1);
-     elsif nextchar in digits:
+     elsif (nextchar in digits) or nextchar='-':
        return parse_number(JSON, idx);
+     else
+       SetError(9918, "Unable to detect type " +  Substr(JSON, idx - 2, 10));
     fi;
 --        elif nextchar == 'N' and string[idx:idx + 3] == 'NaN':
 --            return parse_constant('NaN'), idx + 3
