@@ -46,6 +46,14 @@ inclass
           return -1;
         fi;
       end;
+    elsif varType(X) = varNull or varType(Y) = varNull  then
+      if  varType(X) = varType(Y):
+         return 0;
+      elsif varType(X) = varNull:
+        return -1;
+      else
+        return 1;
+      fi;
     elsif varType(X) = varObject or varType(Y) = varObject  then
       -- Сравнение объектов или объекта с чем попало
       if X = Y then
