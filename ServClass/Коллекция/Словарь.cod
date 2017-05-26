@@ -1,0 +1,276 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited Итераторы.Итератор "Пара ключ-значение" synonym Dict;
+import Classes Коллекция.Методы;
+
+inobject public
+  -- Количество элементов в контейнере
+  func Количество synonym Count: Integer;
+    --var i, n: Integer;
+    if cache_count = nil then
+      cache_count = LengthOfArray(self.AsArray);
+--      i = 0;
+--      n = LengthOfArray(dataS);
+--      while i <> -1 do
+         -- Эта строка не работает как надо:
+--        n = n + LengthOfArray(dataH[i]);  -- число элементов с хэшем i
+--        i = NextArrItem(dataH, i);
+--      end;
+--      cache_count = n;
+    end;
+    return cache_count;
+  end;
+
+  -- Очистка всех данных
+  proc Очистить Synonym Clear;
+    dataS = nil;
+    dataH = nil;
+    valueS = nil;
+    valueH = nil;
+    CleanCache;
+  end;
+
+  -- Добавление указанного элемента, при наличии - заменяется
+  proc Добавить synonym Add (const key: Variant; value: Variant=nil);
+    var ret: Variant[];
+    ret = Search(key);
+    if ret[3] = -1 then
+      if ret[1] = nil:
+        InsertInArray(dataS, ret[2], key);
+        InsertInArray(valueS, ret[2], value);
+      else
+        dataS[ret[2]] = key;
+        valueS[ret[2]] = key;
+      fi;
+    else
+      dataH[ret[2], ret[3]] = key;
+      valueH[ret[2], ret[3]] = value;
+    fi;
+    CleanCache;
+  end;
+
+  -- Удалить элемент
+  proc Удалить synonym Delete (const key: Variant);
+    var ret: variant[];
+
+    ret = Search(key);
+    if ret[1] <> nil:
+      if ret[3] = -1 then
+        DeleteFromArray(dataS, ret[2]);
+        DeleteFromArray(valueS, ret[2]);
+      else
+        dataH[ret[2], ret[3]] = nil;
+        valueH[ret[2], ret[3]] = nil;
+      end;
+    fi;
+    CleanCache;
+  end;
+
+  -- Возврат значения по ключу
+  func Получить synonym Get (const key: Variant; default: Variant = nil): Variant;
+    var tmp: Variant[];
+    tmp = Search(key);
+    if tmp[1] = nil then
+       -- Если ключ не найден - возвращается значение по умолчанию
+       return default;
+    elsif tmp[3] = -1:
+       return valueS[tmp[3]];
+    else
+       return valueH[tmp[2], tmp[3]];
+    end;
+  end;
+
+
+  ---------------------------------------------------------------------------------------------------------------
+  -- Функция поиска элемента
+  --   аргументы:
+  --       elem - искомый элемент;
+  --   возврат:
+  --       массив из:
+  --         1 найденное значение или nil.
+  --         2 позиция найденного элемента или позицию вставки, если элемент не найден.
+  --         3 номер копии для разрешения коллизий или -1 для сортированного режима
+
+  ---------------------------------------------------------------------------------------------------------------
+  func Найти synonym Search (const elem: Variant): Variant[];
+    var tmpI: Integer;
+    var i: Integer;
+    tmpI = Hash(elem);
+    if tmpI = -1 then
+       Result = SearchSort(elem);
+    else
+       for i = 1 .. LengthOfArray(dataH[tmpI]) do
+         if dataH[tmpI, i] = elem then
+           return [elem, tmpI, i];
+         end;
+       end;
+       return [nil, tmpI, LengthOfArray(dataH[tmpI]) + 1];
+    end;
+  end;
+
+  func НайтиСорт synonym SearchSort (const elem: Variant): Variant[];
+    var first, last, mid, n: Integer;
+
+    n = Count;
+    first = 1;
+    last = n + 1;
+    mid = first + div(last - first, 2);
+
+    if n = 0 or Compare.Rich.Cmp(dataS[1], elem) = 1:
+      return [nil, 1, -1];
+    elsif Compare.Rich.Cmp(dataS[n], elem) = -1:
+      return [nil, n + 1, -1];
+    fi;
+
+    while (first < last) do
+      if Compare.Rich.Cmp(elem, dataS[mid]) <> 1:
+        last = mid;
+      else
+        first = mid + 1;
+      fi;
+      mid = first + div(last - first, 2);
+    od;
+
+    if dataS[last] = elem:
+      result = [dataS[last], last, -1];
+    else
+      result = [nil, last, -1];
+    fi;
+  end;
+
+  --Реализация протокола итератора. Итератор перебирает ключи
+  func Текущий synonym Current: Variant;
+     -- Возвращает текущий элемент итератора
+     if nowsubpos = -1 then
+        return dataS[nowpos];
+     else
+        return dataH[nowpos, nowsubpos];
+     end;
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+    if nowsubpos = -1 then
+      --сначала перебираем массив сортировок
+      nowpos = NextArrItem(dataS, nowpos);
+      if nowpos = -1 then
+        --Если в массиве сортировок данные закончились - переходим к хешам
+        nowsubpos = 0;
+        nowpos = 1;
+      else
+        return True;
+      end;
+    end;
+    nowsubpos = NextArrItem(dataH[nowpos], nowsubpos);
+    while nowsubpos = -1 and nowpos <> -1 do
+      nowpos = NextArrItem(dataH, nowpos);
+      if nowpos = -1 then
+        return False;  -- не нашли следующего хеша - значит закончили пребор
+      else
+        nowsubpos = NextArrItem(dataH[nowpos], 0);
+      end;
+    end;
+
+    if nowpos = -1 then
+      return False;  -- не нашли следующего хеша - значит закончили пребор
+    end;
+  end;
+
+  func Сброс synonym Reset: Logical;
+     -- Переводит указатель на "пред-первый" элемент и возвращает Истина
+     -- То есть после следующего MoveNext будет доступен первый элемент
+     -- Если это невозможно (итератор "неперематываемый") - возвращает Ложь
+     nowpos = 0;
+     nowsubpos = -1; --сначала перебираем массив сортировок
+     return True;
+  end;
+
+  -- Функции, обеспечивающие перебор элементов множества(deprecated)
+  --{
+  proc Первый synonym First;
+    Reset;
+  end;
+
+  func СледЭлемент synonym NextItem: Variant;
+    if nowsubpos = -1 then
+      nowpos = NextArrItem(dataS, nowpos);
+      if nowpos <> -1 then
+        return dataS[nowpos];
+      else
+        nowsubpos = 0;
+        nowpos = 1;
+      end;
+    end;
+    nowsubpos = NextArrItem(dataH[nowpos], nowsubpos);
+    while nowsubpos = -1 and nowpos <> -1 do
+      nowpos = NextArrItem(dataH, nowpos);
+      if nowpos = -1 then
+        return nil;  -- не нашли следующего хеша - значит закончили пребор
+      else
+        nowsubpos = NextArrItem(dataH[nowpos], 0);
+      end;
+    end;
+
+    if nowpos = -1 then
+      return nil;  -- не нашли следующего хеша - значит закончили пребор
+    else
+      return dataH[nowpos, nowsubpos];
+    end;
+  end;
+  --}
+
+  -- Возвращает список ключей в качестве массива
+  func КакМассив synonym AsArray: Variant[];
+    var oneRes:Variant;
+    if cache_arr = nil then
+      self.Reset;
+      self.cache_arr = dataS;
+      self.nowsubpos = 0;
+      self.nowpos = 1;
+      self.MoveNext;
+      oneRes = self.Current;
+      while oneRes <> nil do
+        AddInArray(cache_arr, oneRes);
+        self.MoveNext;
+        oneRes = self.Current;
+      end;
+    end;
+    return cache_arr;
+
+  end;
+
+
+
+inobject private
+
+  --данные synonym data: variant[];  --собственно хранилище элементов
+
+  dataS[]: variant;  --Хранилище элементов на основе сортировки
+  valueS[]: variant;  --Значения значений на основе сортировки
+  dataH[2]: variant;  --Хранилище элементов на основе хэшей (второй размер для разрешения коллизий)
+  valueH[2]: variant;  --Значения значений на основе хэшей
+  nowpos: Integer; --Текущая позиция при переборе элементов
+  nowsubpos: Integer; --Текущая позиция коллизии при переборе элементов (-1 для сортированных)
+  -- Кэшированные значения
+  cache_arr: Variant[];
+  cache_count: Integer;
+  proc CleanCache;
+    cache_arr = nil;
+    cache_count = nil;
+  end;
+end
