@@ -19,6 +19,7 @@ class inherited FuncObj "Элементы массива";
 
 inclass
   func New synonym CreateEx(Indexes[]:Integer):Elems;
+    Result = Create;
     Result.idx = Indexes;
   end;
 
@@ -32,7 +33,7 @@ inobject
      ResArr = [];
      SrcArr = Params[1] as Variant[];
      for i = 1 .. LengthOfArray(idx) do
-        ResArr[i] = SrcArr[idx[1]];
+        ResArr[i] = SrcArr[idx[i]];
      end;
      return ResArr;
    end;
