@@ -24,80 +24,6 @@ inclass  public
       Array[l+1]=Item;
   end; 
 
-  func Сравнить synonym Compare, cmp (X: Variant; Y: Variant): Integer;
-    var i, ii, k: Integer;
-    var Xa, Ya: Variant[];
-    if varType(X) < varObject  and varType(Y) < varObject  then
-      if varType(X) = varType(Y) then
-        -- Тривиальное сравнение скаляров
-        if X = Y then
-          return 0;
-        elsif X > Y then
-          return 1;
-        else
-          return -1;
-        end;
-      else
-        -- В качестве хоть какого-то сравнения разнородных скаляров - сравниваем типы
-        if varType(X) > varType(Y) then
-          return 1;
-        else
-          return -1;
-        fi;
-      end;
-    elsif varType(X) = varObject or varType(Y) = varObject  then
-      -- Сравнение объектов или объекта с чем попало
-      if X = Y then
-        -- Перегрузка равенства обеспечена Турбо9
-        return 0;
-      end;
-      -- TODO: проверять на возможность сравнения разнородных
-      if X.ClassInfo.MemberByName("LessThan") <> nil:
-        if X.LessThan(Y) then
-          return -1;
-        else
-          return 1;
-        end;
-      elsif Y.ClassInfo.MemberByName("LessThan") <> nil:
-        if Y.LessThan(X) then
-          return 1;
-        else
-          return -1;
-        end;
-      elsif X.ClassInfo.MemberByName("GreaterThan") <> nil:
-        if X.GreaterThan(Y) then
-          return 1;
-        else
-          return -1;
-        end;
-      elsif Y.ClassInfo.MemberByName("GreaterThan") <> nil:
-        if Y.GreaterThan(X) then
-          return -1;
-        else
-          return 1;
-        end;
-      else
-        SetError(0, "Несравнимые типы");
-      fi;
-    elsif varType(X) = varArray and varType(Y) = varArray  then
-      Xa = X as Variant[];
-      Ya = Y as Variant[];
-      -- сравнение массивов
-      ii = Min([LengthOfArray(Xa), LengthOfArray(Ya)]);
-      for i = 1 .. ii do
-        k = cmp(Xa[i], Ya[i]);
-        if k <> 0 then
-           return k;
-        end;
-      end;
-      -- Все элементы на общей длине равны, больше тот кто длиннее
-      Return cmp(LengthOfArray(Xa), LengthOfArray(Ya));
-    else
-      SetError(0, "Несравнимые типы");
-    end;
-    Result = 0;
-  end;
-
   func СложениеПоКругу synonym CircleAdd (X: Integer; Y:Integer; maxVal:Integer=0x3FFFFFFF): Integer;
     -- Сложение двух аргументов, так, чтобы результат не превышал maxVal
     -- Если результат потенциально больше - начинаем считать с 0.
@@ -195,7 +121,7 @@ inclass  public
     for i = 2 .. size do
       active = MyArray[i];
       j = i - 1;
-      while (j >= 1) and (Compare(GetKey(MyArray[j]),
+      while (j >= 1) and (Compare.Rich.Compare(GetKey(MyArray[j]),
                                   GetKey(active)) = 1) do
         -- "Проматываем" назад до места, куда надо вставить
         -- т.е. когда "наш" больше предыдущего
