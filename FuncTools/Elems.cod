@@ -19,18 +19,22 @@ class inherited FuncObj "Элементы массива";
 
 inclass
   func New synonym CreateEx(Indexes[]:Integer):Elems;
-    Result.idx = Result.FindMethod(aMethodName);
+    Result.idx = Indexes;
   end;
 
 inobject
-  idx[] :Integer;
+   idx[]: Integer;
 
    func Вызвать synonym Call(Params: Variant[]): Variant;
-     var i:I;
-     Result = [];
+     var i: Integer;
+     var SrcArr[]: Variant;
+     var ResArr[]: Variant;
+     ResArr = [];
+     SrcArr = Params[1] as Variant[];
      for i = 1 .. LengthOfArray(idx) do
-        Result[i] = Params[1][idx[1]];
+        ResArr[i] = SrcArr[idx[1]];
      end;
+     return ResArr;
    end;
 
 end
