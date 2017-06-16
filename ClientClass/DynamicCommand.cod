@@ -19,10 +19,10 @@ class inherited Command "Команда, вызывающая объект-фу�
 inclass
 
   -- Конструктор
-  func CreateEx(commName: String;  -- имя команды
-                commCaption: String;  -- отображение
-                Callback: TUL.FuncObj = nil; -- обработчик
-                commImage: Image = nil -- иконка
+  func CreateEx (commName: String;  -- имя команды
+                 commCaption: String;  -- отображение
+                 Callback: TUL.ApplyArg = nil; -- обработчик
+                 commImage: Image = nil -- иконка
                 ): DynamicCommand;
 
     Result = inherited Create;
@@ -35,7 +35,10 @@ inclass
   -- Поиск зарегистрированной команды
   func GetRegisteredCommand(commx: DynamicCommand): DynamicCommand;
     var comm: Command;
+    var dynComm: DynamicCommand;
     var  i, ii, y, yy, z, zz: Integer;
+    var grName: String;
+    grName = '$'; --commx.cb.OldFunc.GetField('myObj').ClassName + '$';
     with Commands do
       ii = GroupsCount;
       for i = 1 .. ii do
@@ -43,14 +46,16 @@ inclass
           if Name = 'Local':
             yy = GroupsCount;
             for y = 1 .. yy do
-              if Group[y].Name = ClassName:
+              if Group[y].Name = grName:
                 with Group[y] do
                   zz = CommandsCount;
                   for z = 1 .. zz do
                     comm = Command[z];
                     if comm is DynamicCommand:
-                      Result = comm as DynamicCommand;
-                      if Result = commx: return; else return nil; fi;
+                      dynComm = comm as DynamicCommand;
+                      if dynComm = commx:
+                        return dynComm;
+                      fi;
                     fi;
                   od;
                 end;
@@ -65,7 +70,7 @@ inclass
 
 inobject
 
-  var cb: TUL.FuncObj; -- обработчик
+  var cb: TUL.ApplyArg; -- обработчик
 
   proc OnDispatch;
     if cb <> nil: cb.Call(nil); fi;
@@ -73,15 +78,18 @@ inobject
 
   func Equal(commx: DynamicCommand): Logical;
     if commx <> nil:
-      result = (commx.Name = self.Name) and
-               (commx.cb = self.cb);
+      result = (commx.Name = self.Name);
+--      result = (commx.Name = self.Name) and
+--               (commx.cb = self.cb);
     fi;
   end;
 
   -- Регистрирует команду в группе команд заданного класса
-  proc Register(ClassName: String);
+  proc Register(clsName: String);
     var commgr: CommandGroup;
     var  i, ii, y, yy: Integer;
+    var grName: String;
+    grName = '$';
     with Commands do
       ii = GroupsCount;
       for i = 1 .. ii do
@@ -90,14 +98,14 @@ inobject
           if Name = 'Local':
             yy = GroupsCount;
             for y = 1 .. yy do
-              if Group[y].Name = ClassName:
+              if Group[y].Name = grName:
                 commgr = Group[y];
                 break;
               fi;
             od;
             -- Если ничего не нашли - создадим группу сами
             if commgr = nil:
-              commgr = AddGroup(ClassName);
+              commgr = AddGroup(grName);
             fi;
             break;
           fi;
