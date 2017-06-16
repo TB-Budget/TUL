@@ -21,7 +21,7 @@ inclass
   -- Конструктор
   func CreateEx (commName: String;  -- имя команды
                  commCaption: String;  -- отображение
-                 Callback: TUL.ApplyArg = nil; -- обработчик
+                 Callback: TUL.FuncObj = nil; -- обработчик
                  commImage: Image = nil -- иконка
                 ): DynamicCommand;
 
@@ -38,7 +38,7 @@ inclass
     var dynComm: DynamicCommand;
     var  i, ii, y, yy, z, zz: Integer;
     var grName: String;
-    grName = '$'; --commx.cb.OldFunc.GetField('myObj').ClassName + '$';
+    grName = '$';
     with Commands do
       ii = GroupsCount;
       for i = 1 .. ii do
@@ -70,7 +70,7 @@ inclass
 
 inobject
 
-  var cb: TUL.ApplyArg; -- обработчик
+  var cb: TUL.FuncObj; -- обработчик
 
   proc OnDispatch;
     if cb <> nil: cb.Call(nil); fi;
@@ -79,8 +79,6 @@ inobject
   func Equal(commx: DynamicCommand): Logical;
     if commx <> nil:
       result = (commx.Name = self.Name);
---      result = (commx.Name = self.Name) and
---               (commx.cb = self.cb);
     fi;
   end;
 
