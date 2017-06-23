@@ -1,0 +1,107 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2017
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+class "Упаковка/распаковка BASE64";
+
+inclass
+       --                   111111111122222222223333333333444444444455555555556666
+  --Base64        0123456789012345678901234567890123456789012345678901234567890123
+  var b64:String="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  func EncodeBlock64(Inp:String):String;
+  var c1,c2,c3,c1l,c1u,c2l,c2u,c3l,c3u,o1,o2,o3,o4:Integer;
+    c1=Ord(Substr(Inp,1,1));c1u=Mod(c1,4); c1l=Div(c1,4);
+    c2=Ord(Substr(Inp,2,1));c2u=Mod(c2,16); c2l=Div(c2,16);
+    c3=Ord(Substr(Inp,3,1));c3u=Mod(c3,64);  c3l=Div(c3,64);
+    o1=c1l+1;
+    if c2=-1 then
+       Return (b64[o1]+b64[c1u*16+1]+"==");
+    end;
+    o2=c1u*16+c2l+1;
+    if c3=-1 then
+       Return (b64[o1]+b64[o2]+b64[c2u*4+1]+"=");
+    end;
+    o3=c2u*4+c3l+1;
+    o4=c3u+1;
+    Result = b64[o1]+b64[o2]+b64[o3]+b64[o4];
+  end;
+
+  func Encode64(Input:String):String;
+  var Buf,Res:String;
+  var p:Integer;
+    Buf=Substr(Input,1,3);p=1;
+    while Buf<>"" do
+      Res=Res+EncodeBlock64(Buf);
+      if Mod(p-1,57)=0 then Res=Res+chr(10)+chr(13); end;
+      p=p+3;
+      Buf=Substr(Input,p,3);
+    od;
+    Result = Res;
+  end;
+
+  func DecodeBlock64(Input:String):String;
+  var c1,c2,c3,c1l,c1u,c2l,c2u,c3l,c3u,o1,o2,o3,o4:Integer;
+  var b1,b2,b3,b4:String;
+    --Разбиение на символы
+    b1 = Substr(Input, 1, 1);
+    b2 = Substr(Input, 2, 1);
+    b3 = Substr(Input, 3, 1);
+    b4 = Substr(Input, 4, 1);
+    --Символы в коды по таблице
+    o1 = CharPos(b1, b64) - 1;
+    o2 = CharPos(b2, b64) - 1;
+    o3 = if(b3="=", 0, CharPos(b3, b64) - 1);
+    o4 = if(b4="=", 0, CharPos(b4, b64) - 1);
+    if o1<0 or o2<0 or o3<0 or o4<0:
+       SetError(0, 'Недопустимые символы в Base64');
+    fi;
+    --Разбиение кодов на части
+    c1l=o1;
+    c1u=Div(o2,16);c2l=Mod(o2,16);
+    c2u=Div(o3,4);c3l=Mod(o3,4);
+    c3u=o4;
+    --Переобъединение кодов
+    c1=c1l*4+c1u; c2=c2l*16+c2u; c3=c3l*64+c3u;
+    --Вывод
+    if b3="=" then
+       Result = Chr(c1);
+    elsif b4="=" then
+       Result = Chr(c1)+Chr(c2);
+    else 
+      Result = Chr(c1)+Chr(c2)+Chr(c3);
+    end;
+  end;
+
+  func Decode64(Input:String):String;
+  var Buf,Res:String;
+  var p:Integer;
+    p = CharPos(chr(10)+chr(13)+' ', Input);
+    while p > 0 do
+      Input = Substr(Input, 1, p - 1) + Substr(Input, p + 1, Length(Input));
+      p = CharPos(chr(10)+chr(13)+' ', Input);
+    od;
+    Buf = Substr(Input, 1, 4);
+    p = 1;
+    while Buf <> "" do
+      Res = Res + DecodeBlock64(Buf);
+      p = p + 4;
+      Buf = Substr(Input, p, 4);
+    od;
+    Result = Res;
+  end;
+
+
+end
