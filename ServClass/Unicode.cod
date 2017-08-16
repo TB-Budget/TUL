@@ -1,0 +1,97 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class "Работа с Юникодом на прикладном уровне";
+
+inclass
+  func BOToPseudoByte(inp: BinaryObject): String;
+    var i: Integer;
+    var tmp: String;
+    var rp: Integer;
+     tmp = RepStr(chr(0x20), Div(inp.Size + 1, 2) );
+     rp = varAddr(tmp);
+     for i = 1..inp.Size do
+        WriteMemory(rp + i - 1, inp.Bytes[i], 1);
+     end;
+     Result = tmp;
+  end;
+
+  func FromUTF16(Src: String): Unicode;
+  var i, ii: Integer;
+  var j: Integer;
+  var c, c1: Integer;
+    ii = Length(Src);
+    Result = Unicode.Create;
+    i = 1; j = 1;
+    while  i <= ii do
+       c = ord(Substr(Src, i, 1));
+       if c < 0xD800 or c > 0xDFFF then
+          Result.chars[j] = c;
+          i = i + 1;
+          j = j + 1;
+       ElsIf (c >= 0xDC00) Then
+          SetError(0, "Недопустимая кодовая последовательность.");
+       else
+         --Обработка суррогатных пар
+          c = (c and 0x3FF);
+          c = c * 1024;
+          i = i + 1;
+          c1 = ord(Substr(Src, i, 1));
+          i = i + 1;
+          If (c1 < 0xDC00) Or (c1 > 0xDFFF) Then
+            SetError(0, "Недопустимая кодовая последовательность.");
+          Else
+            c1 = (c1 and 0x3FF);
+            c = (c or c1);
+            Result.chars[j] = c + 0x10000;
+            j = j + 1;
+          fi;
+       fi;
+    end;
+
+  end;
+inobject --private
+  var chars: Integer[];
+inobject public
+
+  func ToUTF16: String;
+  var i: Integer;
+  var c: Integer;
+    Result = '';
+    for i = 1.. LengthOfArray(self.chars)  do
+       c = chars[i];
+       if c < 0x10000 then
+          Result = Result + chr(c);
+       else
+         --Генерация суррогатных пар
+          c = c - 0x10000;
+          Result = Result + chr(0xD800 or Div(c, 1024));
+          Result = Result + chr(0xDC00 or (c and 0x3FF));
+       fi;
+    end;
+  end;
+
+  func Equal(Ob: Object):Logical;
+    if Ob is Unicode  then
+       return Ob.chars = self.chars;
+    else
+       return False;
+    fi;
+
+  end;
+
+
+end

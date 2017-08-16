@@ -8,3 +8,5 @@
 /*.dsk
 /*.sig
 /*.~prj
+*.bak
+*.~mtl
