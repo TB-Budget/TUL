@@ -24,4 +24,12 @@ inclass
     end;
   end;
 
+  func Ensure(src: Variant): Variant;
+    if src is AsyncResult then
+       return src.Get;
+    else
+       return src;
+    end;
+  end;
+
 end
