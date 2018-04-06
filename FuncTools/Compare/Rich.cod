@@ -28,9 +28,13 @@ inclass
   func Сравнить synonym Compare, cmp (X: Variant; Y: Variant): Integer;
     var i, ii, k: Integer;
     var Xa, Ya: Variant[];
+    --Скаляры
     if varType(X) < varObject  and varType(Y) < varObject  then
-      if varType(X) = varType(Y) then
-        -- Тривиальное сравнение скаляров
+      -- Тривиальное сравнение скаляров
+      if varType(X) = varType(Y) or
+            --Целые сравнимы с действительными
+            (varType(X) = varInt and varType(Y) = varNumeric) or
+            (varType(X) = varNumeric and varType(Y) = varInt) then
         if X = Y then
           return 0;
         elsif X > Y then
@@ -38,24 +42,25 @@ inclass
         else
           return -1;
         end;
-      else
-        -- В качестве хоть какого-то сравнения разнородных скаляров - сравниваем типы
+      else  -- В качестве хоть какого-то сравнения разнородных скаляров - сравниваем типы
         if varType(X) > varType(Y) then
           return 1;
         else
           return -1;
         fi;
       end;
+    -- Если один из элементов - nil.
     elsif varType(X) = varNull or varType(Y) = varNull  then
       if  varType(X) = varType(Y):
          return 0;
       elsif varType(X) = varNull:
+        --Принимаем nil меньше любого реального типа
         return -1;
       else
         return 1;
       fi;
+    -- Сравнение объектов или объекта с чем попало
     elsif varType(X) = varObject or varType(Y) = varObject  then
-      -- Сравнение объектов или объекта с чем попало
       if X = Y then
         -- Перегрузка равенства обеспечена Турбо9
         return 0;
@@ -88,6 +93,7 @@ inclass
       else
         SetError(0, "Несравнимые типы");
       fi;
+    --Сравнение массивов
     elsif varType(X) = varArray and varType(Y) = varArray  then
       Xa = X as Variant[];
       Ya = Y as Variant[];

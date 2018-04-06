@@ -40,7 +40,7 @@ InClass Public
 InObject Private
   myObj: Object;
   myCla: Class;
-  myMeth:MethodInfo;
+  myMeth: MethodInfo;
 
 InObject Public
   func FindMethod(aMethodName: String): MethodInfo;
@@ -68,28 +68,28 @@ InObject Public
     self.ResultType = self.myMeth.ResultType;
   end;
 
-  func Вызвать synonym Call(Params: Variant[]): Variant;
-    if myMeth.Kind=2 then--MethodInfo.MethodKind("mkFunc") then
-       if myObj = nil then
-         Result=myMeth.CallFuncEx(myCla,Params);
-       else
-         Result=myMeth.CallFuncEx(myObj,Params);
-       end;
-    elsif myMeth.Kind=1 then--MethodInfo.MethodKind("mkProc") then
-       try
-         if myObj = nil then
-            myMeth.CallProcEx(myCla,Params);
-         else
-            myMeth.CallProcEx(myObj,Params);
-         fi;
-         Result=True;
-       except
-         Result=False;
-         raise;
-       end;
+  func thisCall(Obj: Variant; Params: Variant[]): Variant;
+    if myMeth.Kind = 2 then
+      Result = myMeth.CallFuncEx(Obj, Params);
+    elsif myMeth.Kind = 1 then
+      try
+        myMeth.CallProcEx(Obj, Params);
+        Result = True;
+      except
+        Result = False;
+        raise;
+      end;
     else
       SetError(0,"Метод не является процедурой или функцией");
-      Result=False;
+      Result = False;
+    end;
+  end;
+
+  func Вызвать synonym Call(Params: Variant[]): Variant;
+    if myObj = nil then
+      Result = self.thisCall(myCla, Params);
+    else
+      Result = self.thisCall(myObj, Params);
     end;
   end;
 end

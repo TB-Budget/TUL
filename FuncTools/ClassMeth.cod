@@ -21,7 +21,7 @@ InClass Public
     Result = FromString(aMethodname);
   end;
 
-  func ИзСтроки synonym FromString(aMethodName :String):ClassMeth;
+  func ИзСтроки synonym FromString(aMethodName :String): ClassMeth;
   var i:Integer;
   var sCl,sMe:String;
     Result = Create;

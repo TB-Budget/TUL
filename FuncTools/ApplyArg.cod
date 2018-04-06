@@ -17,29 +17,54 @@
 class inherited FuncObj "Функция с частично сохраненными аргументами";
 
 inclass
-  func New synonym CreateEx(OldFunc: Tul.FuncObj; Args: Variant[]): ApplyArg;
+  func New synonym CreateEx(OldFunc: Tul.FuncObj; Args: Variant[]; TailArgs: Variant[]=[]): ApplyArg;
+    var i0, i, ii: Integer;
     Result = inherited Create;
-    Result.KeptArgs = Args;
-    Result.OldFunc = OldFunc;
+    if OldFunc is ApplyArg then
+      Result.OldFunc = (OldFunc as ApplyArg).OldFunc;
+      Result.KeptArgs = (OldFunc as ApplyArg).KeptArgs;
+      Result.TailArgs = (OldFunc as ApplyArg).TailArgs;
+      --Добавление аргументов в новую функцию
+      ii = LengthOfArray(Args);
+      i0 = LengthOfArray(Result.KeptArgs);
+      for i = 1 .. ii do
+        Result.KeptArgs[i0 + i] = Args[i];
+      end;
+      ii = LengthOfArray(TailArgs);
+      i0 = LengthOfArray(Result.TailArgs);
+      for i = 1 .. ii do
+        Result.TailArgs[i0 + i] = TailArgs[i];
+      end;
+    else
+      Result.OldFunc = OldFunc;
+      Result.KeptArgs = Args;
+      Result.TailArgs = TailArgs;
+    fi;
   end;
 
 inobject
 
   var KeptArgs: Variant[];
+  var TailArgs: Variant[];
   var OldFunc: Tul.FuncObj;
 
-   func Вызвать synonym Call(Params: Variant[]): Variant;
-     var i0, i, ii: Integer;
-     var MyParams[]: Variant;
-     MyParams = KeptArgs;
-     --Extend
-     i0 = LengthOfArray(MyParams);
-     ii = LengthOfArray(Params);
-     for i = 1..ii do
-       MyParams[i0 + i] = Params[i];
-     end;
+  func Вызвать synonym Call(Params: Variant[]): Variant;
+    var i0, i, ii: Integer;
+    var MyParams[]: Variant;
+    MyParams = KeptArgs;
+    --Extend
+    i0 = LengthOfArray(MyParams);
+    ii = LengthOfArray(Params);
+    for i = 1 .. ii do
+      MyParams[i0 + i] = Params[i];
+    end;
+    i0 = i0 + ii;
+    ii = LengthOfArray(TailArgs);
+    for i = 1 .. ii do
+      MyParams[i0 + i] = TailArgs[i];
+    end;
 
-     OldFunc.Call(MyParams);
-   end;
+    OldFunc.Call(MyParams);
+  end;
 
 end

@@ -31,11 +31,7 @@ inobject
    var i: Integer;
    var args: Variant[];
    var SyncCall: Class;
-     try
-       SyncCall = FindClass('TUL.AsyncTools');
-     except
-       SyncCall = nil;
-     end;
+     SyncCall = FindClass('TUL.AsyncTools');
 
      args = Params;
      for i = 1 .. LengthOfArray(self.Stack) do
