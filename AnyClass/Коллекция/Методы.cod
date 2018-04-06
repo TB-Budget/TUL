@@ -87,10 +87,12 @@ inclass  public
         end;
       end;
     elsif vt = varObject:
-      if X.InheritsFrom(Record):
-        return Hash(X.ExtID);
-      elsif X.InheritsFrom(Sign):
+--      if X.InheritsFrom(Record):
+--        return Hash(X.ExtID);
+      if X.InheritsFrom(Sign):
         return Hash(X.DocID);
+      elsif X.ClassInfo.MemberByName('ExtID') <> nil:
+        return Hash(X.ExtID);
       elsif X.ClassInfo.MemberByName('Hash') <> nil:
         return Hash(X.Hash);
       else
@@ -122,7 +124,7 @@ inclass  public
       active = MyArray[i];
       j = i - 1;
       while (j >= 1) and (Compare.Rich.Compare(GetKey(MyArray[j]),
-                                  GetKey(active)) = 1) do
+                                               GetKey(active)) = 1) do
         -- "Проматываем" назад до места, куда надо вставить
         -- т.е. когда "наш" больше предыдущего
         MyArray[j + 1] = MyArray[j];

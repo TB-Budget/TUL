@@ -38,4 +38,14 @@ inobject
      -- Если это невозможно (итератор "неперематываемый") - возвращает Ложь
      return False;
   end;
+
+  func AsArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
+  var i: Integer;
+    Result = [];
+    i = 1;
+    while self.MoveNext do
+      Result[i] = self.Current;
+      i = i + 1;
+    end;
+  end;
 end

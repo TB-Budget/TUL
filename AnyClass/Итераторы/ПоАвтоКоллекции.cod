@@ -1,0 +1,57 @@
+--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2015
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited Итераторы.Итератор "Перебор всего массива" synonym OnAutoEnum;
+const S_OK: Integer = 0;
+inclass
+  func New(myAO: AutoObject): Итераторы.OnAutoEnum;
+    Result = create;
+    --На будущее - проверить ENUM или генератор ENUMов
+    Result.enum = myAO._NewEnum;
+  end;
+
+inobject private
+  var enum: AutoObject;
+  var cur_buf: Variant;
+
+inobject public
+  func Текущий synonym Current: Variant;
+     -- Возвращает текущий элемент итератора
+     return self.cur_buf;
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+     var tmpI: Integer;
+     var tmpV: Variant;
+     if enum.Next(1, tmpV, tmpI) = S_OK:
+        self.cur_buf = tmpV;
+        return True;
+     else
+        return False;
+     fi;
+  end;
+
+  func Сброс synonym Reset: Logical;
+     if self.enum.Reset() = S_OK:
+        return True;
+     else
+        return False;
+     fi;
+  end;
+
+end

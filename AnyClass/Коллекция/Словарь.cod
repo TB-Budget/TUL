@@ -94,7 +94,15 @@ inobject public
     end;
   end;
 
-
+  func Содержит synonym Have (const key: Variant): Logical;
+    var tmp: Variant[];
+    tmp = Search(key);
+    if tmp[1] = nil then
+      return False;
+    else
+      return True;
+    fi;
+  end;
   ---------------------------------------------------------------------------------------------------------------
   -- Функция поиска элемента
   --   аргументы:
@@ -235,7 +243,7 @@ inobject public
   --}
 
   -- Возвращает список ключей в качестве массива
-  func КакМассив synonym AsArray: Variant[];
+  func КакМассив synonym AsArray (MaxIter:Integer=0x7FFFFFFF): Variant[];
     var oneRes:Variant;
     if cache_arr = nil then
       self.Reset;

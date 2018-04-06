@@ -1,13 +1,14 @@
-<?xml version="1.0" encoding="windows-1251"?>
+п»ї<?xml version="1.0" encoding="UTF-8"?>
 <Project Version="1">
-  <Options Caption="Turbo Utilities Library" Comment="Проект создан мастером проектов" Version="001" Author="Copyright © 2016 Scondo" Code="0" SubCode="0" WebCode="0" WebSubCode="0" Frontal="True"/>
+  <Options Caption="Turbo Utilities Library" Comment="РџСЂРѕРµРєС‚ СЃРѕР·РґР°РЅ РјР°СЃС‚РµСЂРѕРј РїСЂРѕРµРєС‚РѕРІ" Version="001" Author="Copyright В© 2016 Scondo" Code="0" SubCode="0" WebCode="0" WebSubCode="0" Frontal="True"/>
   <Usage/>
   <Groups>
     <Group Name="FuncTools" Type="Classes" Disabled="False"/>
     <Group Name="Async" Type="Classes" Disabled="False"/>
     <Group Name="Serialize" Type="Classes" Disabled="False"/>
-    <Group Name="ClientClass" Type="Classes" Disabled="False"/>
+    <Group Name="AnyClass" Type="Classes" Disabled="False"/>
     <Group Name="ServClass" Type="Classes" Disabled="False"/>
+    <Group Name="ClientClass" Type="Classes" Disabled="False"/>
     <Group Name="ReferenceTypes" Type="Classes" Disabled="False"/>
     <Group Name="Tables" Type="Documents" Disabled="False"/>
   </Groups>

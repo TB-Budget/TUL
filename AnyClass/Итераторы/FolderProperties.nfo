@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Properties Version="1"/>
+<Items>
+  <Item Name="Итератор"/>
+  <Item Name="Кэш"/>
+  <Item Name="КакИтератор"/>
+  <Item Name="Отображение"/>
+  <Item Name="ПоАвтоКоллекции"/>
+  <Item Name="ПоМассиву"/>
+  <Item Name="ПоМассивуУпл"/>
+  <Item Name="Фильтр"/>
+</Items>
