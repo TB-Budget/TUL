@@ -21,12 +21,17 @@ inclass
     var i: Integer;
     var tmp: String;
     var rp: Integer;
+    #if Unicode then
      tmp = RepStr(chr(0x20), Div(inp.Size + 1, 2) );
      rp = varAddr(tmp);
      for i = 1..inp.Size do
         WriteMemory(rp + i - 1, inp.Bytes[i], 1);
      end;
      Result = tmp;
+    #else
+     --В неюникодной версии у нас строка вполне байтовая.
+     Result = inp.AsString;
+    #end
   end;
 
   func FromUTF16(Src: String): Unicode;
