@@ -24,16 +24,12 @@ inclass
     #if Версия=9.4 then
       return inp.AsString;
     #else
-     #if not Unicode then
-     --В неюникодной версии у нас строка вполне байтовая.
-       return inp.AsString;
-     #end
-     tmp = RepStr(chr(0x20), Div(inp.Size + 1, 2) );
-     rp = varAddr(tmp);
-     for i = 1..inp.Size do
-        WriteMemory(rp + i - 1, inp.Bytes[i], 1);
-     end;
-     Result = tmp;
+      tmp = RepStr(chr(0x20), Div(inp.Size + 1, 2) );
+      rp = varAddr(tmp);
+      for i = 1..inp.Size do
+         WriteMemory(rp + i - 1, inp.Bytes[i], 1);
+      end;
+      Result = tmp;
     #end
   end;
 
