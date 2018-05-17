@@ -96,14 +96,14 @@ inobject
   var current_: String;
   func Текущий synonym Current: Variant;
      -- Возвращает текущий элемент итератора
-     return self.current;
+     return self.current_;
   end;
 
   func НаСледующий synonym MoveNext: Logical;
      -- Переводит указатель на следующий элемент и возващает Истина
      -- Если это невозможно - возвращает Ложь
      self.current_ = self.readln;
-     return self.EOF and self.current<>nil;
+     return self.EOF and self.current_ <>nil;
   end;
 
   func Сброс synonym Reset: Logical;
