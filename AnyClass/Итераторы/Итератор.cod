@@ -16,9 +16,8 @@
 
 class "Прототип итератора" synonym Iterator;
 
-inclass
+inobject public
 
-inobject
   func Текущий synonym Current: Variant;
      -- Возвращает текущий элемент итератора
      SetError(0, 'Абстрактный метод');
@@ -39,8 +38,8 @@ inobject
      return False;
   end;
 
-  func AsArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
-  var i: Integer;
+  func КакМассив synonym AsArray (MaxIter: Integer=0x7FFFFFFF): Variant[];
+    var i: Integer;
     Result = [];
     i = 1;
     while self.MoveNext do
@@ -48,4 +47,5 @@ inobject
       i = i + 1;
     end;
   end;
+
 end

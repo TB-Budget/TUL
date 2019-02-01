@@ -15,13 +15,17 @@
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 class "Методы для работы с коллекциями";
+
 inclass private
+
  tmpSt: Storage;
+
 inclass  public
-  proc AddInArray(var Array:Variant[]; Item:Variant);
-  var l:Integer;
-      l=LengthOfArray(Array);
-      Array[l+1]=Item;
+
+  proc AddInArray (var Array: Variant[]; Item: Variant);
+    var l: Integer;
+    l = LengthOfArray(Array);
+    Array[l + 1] = Item;
   end; 
 
   func СложениеПоКругу synonym CircleAdd (X: Integer; Y:Integer; maxVal:Integer=0x3FFFFFFF): Integer;
@@ -43,23 +47,20 @@ inclass  public
     while Result > maxVal do
       Result = Result - maxVal;
     end;
-
   end;
 
-  func Crc2Int(CRC: String): Integer;
-    if tmpSt=nil then
-       tmpSt = Storage.Create; -- на самом деле сойдет любой объект
+  func Crc2Int (CRC: String): Integer;
+    if tmpSt = nil then
+      tmpSt = Storage.Create; -- на самом деле сойдет любой объект
     end;
     Result = (tmpSt.Evaluate("0x" + CRC) as Integer);
     Result = Int(Abs(Result));
   end;
 
   func Хэш synonym Hash (X: Variant): Integer;
-    var vt: Integer;
+    var vt, i, tmpI: Integer;
     var tmpS: String;
     var tmpA: Variant[];
-    var i, tmpI: Integer;
-
     vt = VarType(X);
     if vt = varInt then
       return CircleAdd(X, 0);
@@ -106,12 +107,12 @@ inclass  public
     end;
   end;
 
-  proc Сортировка synonym Sort(var MyArray: Variant[]; KeyFunc: FuncObj=nil); --Сортировка вставками
+  proc Сортировка synonym Sort (var MyArray: Variant[]; KeyFunc: FuncObj=nil); -- Сортировка вставками
     var active: Variant;
-    var i, j, size :Integer;
+    var i, j, size: Integer;
 
     func GetKey(Item: Variant): Variant;
-      --Функция взятия ключа приминением фукнции
+      -- Функция взятия ключа приминением фукнции
       if KeyFunc=nil then
          Result = Item;
       else
@@ -123,8 +124,7 @@ inclass  public
     for i = 2 .. size do
       active = MyArray[i];
       j = i - 1;
-      while (j >= 1) and (Compare.Rich.Compare(GetKey(MyArray[j]),
-                                               GetKey(active)) = 1) do
+      while (j >= 1) and (Compare.Rich.Compare(GetKey(MyArray[j]), GetKey(active)) = 1) do
         -- "Проматываем" назад до места, куда надо вставить
         -- т.е. когда "наш" больше предыдущего
         MyArray[j + 1] = MyArray[j];
@@ -133,6 +133,5 @@ inclass  public
       MyArray[j + 1] = active;
     od;
   end;
-
 
 end
