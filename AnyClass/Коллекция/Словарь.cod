@@ -194,6 +194,7 @@ inobject public
     if nowpos = -1 then
       return False;  -- не нашли следующего хеша - значит закончили пребор
     end;
+    return True;
   end;
 
   func Сброс synonym Reset: Logical;
@@ -248,12 +249,9 @@ inobject public
       self.cache_arr = dataS;
       self.nowsubpos = 0;
       self.nowpos = 1;
-      self.MoveNext;
-      oneRes = self.Current;
-      while oneRes <> nil do
-        AddInArray(cache_arr, oneRes);
-        self.MoveNext;
+      while self.MoveNext do
         oneRes = self.Current;
+        AddInArray(cache_arr, oneRes);
       end;
     end;
     return cache_arr;
