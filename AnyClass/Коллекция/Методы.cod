@@ -54,6 +54,15 @@ inclass  public
     Result = Int(Abs(Result));
   end;
 
+  func HashStorage(X: Storage): Integer;
+  var i: Integer;
+    Result = X.Count;
+    for i = 1 .. X.Count do
+       Result = CircleAdd(Result, Hash(X.IndexByNumber[i]));
+       Result = CircleAdd(Result, Hash(X.ItemsByNumber[i]));
+    end;
+  end;
+
   func Хэш synonym Hash (X: Variant): Integer;
     var vt: Integer;
     var tmpS: String;
@@ -91,6 +100,8 @@ inclass  public
 --        return Hash(X.ExtID);
       if X.InheritsFrom(Sign):
         return Hash(X.DocID);
+      elsif X is Storage:
+        return HashStorage(X as Storage);
       elsif X.ClassInfo.MemberByName('ExtID') <> nil:
         return Hash(X.ExtID);
       elsif X.ClassInfo.MemberByName('Hash') <> nil:
