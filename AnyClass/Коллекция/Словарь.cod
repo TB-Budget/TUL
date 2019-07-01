@@ -22,7 +22,7 @@ inobject public
   func Количество synonym Count: Integer;
     --var i, n: Integer;
     if cache_count = nil then
-      cache_count = LengthOfArray(self.AsArray);
+      cache_count = LengthOfArray(self.ToArray);
 --      i = 0;
 --      n = LengthOfArray(dataS);
 --      while i <> -1 do
@@ -243,7 +243,7 @@ inobject public
   --}
 
   -- Возвращает список ключей в качестве массива
-  func КакМассив synonym AsArray (MaxIter:Integer=0x7FFFFFFF): Variant[];
+  func ВМассив synonym ToArray (MaxIter:Integer=0x7FFFFFFF): Variant[];
     var oneRes:Variant;
     if cache_arr = nil then
       self.Reset;

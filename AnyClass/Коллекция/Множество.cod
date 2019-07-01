@@ -30,7 +30,7 @@ inobject public
       if index < LengthOfArray(dataS) then
         result = dataS[index];
       else
-        return self.AsArray[index];  -- Однократный перебор, а потом будет таскать из кэша
+        return self.ToArray[index];  -- Однократный перебор, а потом будет таскать из кэша
       end;
     else
       SetError(0, 'Внутренняя ошибка: значение индекса выходит за границы допустимых значений.');

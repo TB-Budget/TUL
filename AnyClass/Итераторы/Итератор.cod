@@ -39,7 +39,7 @@ inobject
      return False;
   end;
 
-  func AsArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
+  func ToArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
   var i: Integer;
     Result = [];
     i = 1;
@@ -48,4 +48,13 @@ inobject
       i = i + 1;
     end;
   end;
+
+  func Map(ApFunc: FuncObj): Итераторы.Iterator;
+    Result = Итераторы.Map.New(ApFunc, self);
+  end;
+
+  func Filter(FFunc: FuncObj): Итераторы.Iterator;
+    Result = Итераторы.Filter.New(FFunc, self);
+  end;
+
 end
