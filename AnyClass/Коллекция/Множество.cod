@@ -15,10 +15,13 @@
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 class inherited Коллекция.Словарь "Коллекция элементов" synonym Set;
---Множество фактически является словарём у которого игнорируются значения.
+
+-- Множество фактически является словарём у которого игнорируются значения.
+
 import Classes Коллекция.Методы;
 
 inobject public
+
   -- Возврат указанного элемента или nil
   func Получить synonym Get (const key: Variant; default: Variant = nil): Variant;
     result = Search(key)[1];
@@ -39,6 +42,7 @@ inobject public
 
   -- Методы для множеств
   -- Может стоит потом сделать функциями (перенести в класс)
+
   func Объединение synonym Union(other: Коллекция.Set): Коллекция.Set;
     var i, ii: Integer;
     var one: Variant;
