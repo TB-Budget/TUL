@@ -16,24 +16,62 @@
 
 class inherited FuncObj 'Метод как экземпляр функции';
 
+InClass Private
+  var  ClassMethods: Class[];
+
+  func FindClassMethods(ParamsCount: integer): Class;
+    var ParamsCountId: integer;
+    ParamsCountId = ParamsCount + 1;
+    if NextArrItem(ClassMethods, ParamsCountId - 1) <> ParamsCountId:
+      ClassMethods[ParamsCountId] = System.FindClass("TUL.Methods.Param" + str(ParamsCount));
+    fi;
+    Result = ClassMethods[ParamsCount];
+  end;
+
 InClass Public
+
+  func FindMethodByClass(aMethodName: String; Cla: Class): MethodInfo;
+    var res: MemberInfo;
+    res = Cla.ClassInfo.MemberByName(aMethodName);
+    if res = nil then
+       SetError(0,"В классе '"+Cla.ClassName+"' метод '"+aMethodName+"' не найден");
+    end;
+    Result = res;
+  end;
+
   func New synonym CreateEx(aObj: Variant; aMethodName: String):Method;
-    --aObj - объект или класс
-    Result = Create;
-    if varType(aObj) = varObject then
-       Result.myObj = aObj;
-       Result.myCla = Result.myObj.ClassType;
-    elsif varType(aObj) = varClass then
-      Result.myObj = nil;
-      Result.myCla = aObj;
+    var Cla, ClaNew: Class;
+    var Meth: MethodInfo;
+    if varType(aObj) = varObject:
+      Cla = aObj.ClassType;
+    elsif varType(aObj) = varClass:
+      Cla = aObj;
     else
       SetError(26, 'Type mismatch');
     end;
-    Result.myMeth = Result.FindMethod(aMethodName);
+    Meth = FindMethodByClass(aMethodName, Cla);
+    ClaNew = FindClassMethods(Meth.ParamsCount);
+    if ClaNew<>nil:
+      Result = ClaNew.Create;
+    else
+      Result = Create;
+    fi;
+    if varType(aObj) = varObject:
+      Result.myObj = aObj;
+    fi;
+    Result.myCla = Cla;
+    Result.myMeth = Meth;
   end;
 
   func CreateRTTI(aMethod: MethodInfo):Method;
-    Result = Create;
+    var ClaNew: Class;
+    ClaNew = FindClassMethods(aMethod.ParamsCount);
+    if ClaNew<>nil:
+      Result = ClaNew.Create;
+    else
+      Result = Create;
+    fi;
+    Result.myCla = aMethod.Owner.ClassRef;
     Result.myMeth = aMethod;
   end;
 
@@ -44,12 +82,7 @@ InObject Private
 
 InObject Public
   func FindMethod(aMethodName: String): MethodInfo;
-    var res: MemberInfo;
-    res = myCla.ClassInfo.MemberByName(aMethodName);
-    if res = nil then
-       SetError(0,"В классе '"+myCla.ClassName+"' метод '"+aMethodName+"' не найден");
-    end;
-    Result = res;
+    result = FindMethodByClass(aMethodName, myCla);
   end;
 
   proc LoadParams;
