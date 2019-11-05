@@ -25,7 +25,7 @@ InClass Private
     if NextArrItem(ClassMethods, ParamsCountId - 1) <> ParamsCountId:
       ClassMethods[ParamsCountId] = System.FindClass("TUL.Methods.Param" + str(ParamsCount));
     fi;
-    Result = ClassMethods[ParamsCount];
+    Result = ClassMethods[ParamsCountId];
   end;
 
 InClass Public
