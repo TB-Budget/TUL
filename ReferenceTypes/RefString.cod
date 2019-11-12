@@ -32,7 +32,7 @@ inclass public
     result = New(nil as String);
     ii = LengthOfArray(values);
     for i = 1 .. ii do
-      result.Set(result.Get + values[i].Get);
+      result.Set_(result.Get_ + values[i].Get_);
     od;
   end;
 
@@ -57,7 +57,7 @@ inclass private
   -- Приведение объекта к String
   func DynamicCast(obj: Variant): Variant;
     if (obj is RefString):
-      result = (obj.Get as String);
+      result = (obj.Get_ as String);
     elsif not (obj is String):
       result = Str(obj);
     else
@@ -74,7 +74,7 @@ inobject public
 
   -- Длина строки экземпляра
   func Length: Integer;
-    return (System.Length(Get as String));
+    return (System.Length(Get_ as String));
   end;
 
   -- Возвращает индекс первого вхождения значения указанной строки в данном экземпляре
@@ -82,7 +82,7 @@ inobject public
     var val, val_self, val_part: String;
     var p, pp, len: Integer;
     val = DynamicCast(value) as String;
-    val_self = Get as String;
+    val_self = Get_ as String;
     if ignoreCase:
       return Pos(val, val_self);
     else

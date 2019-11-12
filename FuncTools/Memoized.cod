@@ -29,7 +29,7 @@ var Cache: Коллекция.Словарь;
 
    func Вызвать synonym Call(Params: Variant[]): Variant;
      if self.Cache.Have(Params) then
-       return self.Cache.Get(Params);
+       return self.Cache.Get_(Params);
      else
        Result = self.realFunc.Call(Params);
        self.Cache.Добавить(Params, Result);

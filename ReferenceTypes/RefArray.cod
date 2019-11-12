@@ -26,7 +26,7 @@ inclass private
     var i, ii: Integer;
     result = List.Create;
     if obj is RefArray:
-      result.Assign((obj.Get as RefArray));
+      result.Assign((obj.Get_ as RefArray));
     elsif obj is List:
       result.Assign(obj);
     elsif VarType(obj) = varArray:
@@ -45,27 +45,27 @@ inobject public
 
   -- Длина массива
   func Length: Integer;
-    return ((Get as List).Count);
+    return ((Get_ as List).Count);
   end;
 
   -- Добавить новый элемент массива в конец
   proc AddItem(value: Variant);
-    (Get as List).Add(value);
+    (Get_ as List).Add(value);
   end;
 
   -- Вставить новый элемент массива в позицию
   proc InsertItem(index: Integer; value: Variant);
-    (Get as List).Insert(index, value);
+    (Get_ as List).Insert(index, value);
   end;
 
   -- Изменить элемент массива по индексу
   proc SetItem(index: Integer; value: Variant);
-    (Get as List).Items[index] = value;
+    (Get_ as List).Items[index] = value;
   end;
 
   -- Получить элемент массива по индексу
   func GetItem(index: Integer): Variant;
-    return ((Get as List).Items[index]);
+    return ((Get_ as List).Items[index]);
   end;
 
   -- Массив как строка

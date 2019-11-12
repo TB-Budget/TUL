@@ -20,13 +20,13 @@ inclass
   func SyncCall(f: FuncObj; params[]: Variant): Variant;
     Result = f.call(params);
     if Result is AsyncResult then
-       Result = Result.Get;
+       Result = Result.Get_;
     end;
   end;
 
   func Ensure(src: Variant): Variant;
     if src is AsyncResult then
-       return src.Get;
+       return src.Get_;
     else
        return src;
     end;

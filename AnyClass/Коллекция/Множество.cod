@@ -14,7 +14,7 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class inherited Коллекция.Словарь "Коллекция элементов" synonym Set;
+class inherited Коллекция.Словарь "Коллекция элементов" synonym Set_;
 
 -- Множество фактически является словарём у которого игнорируются значения.
 
@@ -23,7 +23,7 @@ import Classes Коллекция.Методы;
 inobject public
 
   -- Возврат указанного элемента или nil
-  func Получить synonym Get (const key: Variant; default: Variant = nil): Variant;
+  func Получить synonym Get_ (const key: Variant; default: Variant = nil): Variant;
     result = Search(key)[1];
   end;
 
@@ -43,10 +43,10 @@ inobject public
   -- Методы для множеств
   -- Может стоит потом сделать функциями (перенести в класс)
 
-  func Объединение synonym Union(other: Коллекция.Set): Коллекция.Set;
+  func Объединение synonym Union(other: Коллекция.Set_): Коллекция.Set_;
     var i, ii: Integer;
     var one: Variant;
-    Result = Коллекция.Set.Create;
+    Result = Коллекция.Set_.Create;
     ii = self.Count;
     for i = 1..ii do
       one = self.Item(i);
@@ -59,10 +59,10 @@ inobject public
     end;
   end;
 
-  func Пересечение synonym Intersect(other: Коллекция.Set): Коллекция.Set;
+  func Пересечение synonym Intersect(other: Коллекция.Set_): Коллекция.Set_;
     var i, ii: Integer;
     var one: Variant;
-    Result = Коллекция.Set.Create;
+    Result = Коллекция.Set_.Create;
     ii = self.Count;
     for i = 1..ii do
       one = self.Item(i);
@@ -73,10 +73,10 @@ inobject public
   end;
 
   func Дополнение synonym Разность, Вычитание, Complement
-                                    (other: Коллекция.Set):Коллекция.Set;
+                                    (other: Коллекция.Set_):Коллекция.Set_;
     var i, ii: Integer;
     var one: Variant;
-    Result = Коллекция.Set.Create;
+    Result = Коллекция.Set_.Create;
     ii = self.Count;
     for i = 1..ii do
       one = self.Item(i);

@@ -24,7 +24,7 @@ inclass public
       SetError(0, 'Абстрактный метод.');
     fi;
     result = Create;
-    result.Set(value);
+    result.Set_(value);
   end;
 
 inclass private
@@ -42,23 +42,23 @@ inclass private
 inobject public
 
   -- Установка значения объекта
-  proc Set(value: Variant);
+  proc Set_(value: Variant);
     _value = DynamicCast(value);
   end;
 
   -- Получение значения объекта
-  func Get: Variant;
+  func Get_: Variant;
     return _value;
   end;
 
   -- Строковое представление объекта (вирт.)
   func ToStr: String;
-    return Str(Get);
+    return Str(Get_);
   end;
 
 
 inobject private
 
-  _value: Variant; -- значение объекта ( ! ИСПОЛЬЗОВАТЬ ИСКЛЮЧИТЕЛЬНО МЕТОДЫ GET и SET ! )
+  _value: Variant; -- значение объекта ( ! ИСПОЛЬЗОВАТЬ ИСКЛЮЧИТЕЛЬНО МЕТОДЫ GET_ и SET_ ! )
 
 end

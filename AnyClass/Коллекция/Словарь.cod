@@ -82,7 +82,7 @@ inobject public
   end;
 
   -- Возврат значения по ключу
-  func Получить synonym Get (const key: Variant; default: Variant = nil): Variant;
+  func Получить synonym Get_ (const key: Variant; default: Variant = nil): Variant;
     var tmp: Variant[];
     tmp = Search(key);
     if tmp[1] = nil then

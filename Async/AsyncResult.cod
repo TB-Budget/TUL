@@ -43,7 +43,7 @@ inobject
     od;
   end;
 
-  func Get:Variant;
+  func Get_:Variant;
     --Это безопасные куски, их можно писать помногу, но лучше иметь в начале
     self.Wait;
   end;

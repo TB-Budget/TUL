@@ -18,12 +18,16 @@ class "Работа с Юникодом на прикладном уровне";
 
 inclass
   func BOToPseudoByte(inp: BinaryObject): String;
-    var i: Integer;
-    var tmp: String;
-    var rp: Integer;
     #if Версия=9.4 then
       return inp.AsString;
     #else
+    var i: Integer;
+    var tmp: String;
+    #if Версия>=10 then
+    var rp: Pointer;
+    #else
+    var rp: Integer;
+    #end
       tmp = RepStr(chr(0x20), Div(inp.Size + 1, 2) );
       rp = varAddr(tmp);
       for i = 1..inp.Size do
