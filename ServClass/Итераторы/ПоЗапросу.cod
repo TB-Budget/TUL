@@ -1,0 +1,40 @@
+﻿class inherited Итераторы.Итератор "";
+
+inclass
+  func New(Records: class[] Record; Filter: String; xArgs:Storage=nil): Итераторы.ПоЗапросу;
+    var i: Integer;
+    Result = create;
+    Result.Q = Query.Create(Records);
+    Result.Q.Filter = Filter;
+    for i  = 1 .. xArgs.Count do
+      Result.Q.SetField(xArgs.IndexByNumber[i], xArgs.ItemsByNumber[i]);
+    end;
+    Result.Q.Select;
+  end;
+
+inobject private
+  var Q: Query;
+
+inobject public
+  func Текущий synonym Current: Variant;
+     -- Возвращает текущий элемент итератора
+     return Q.Current;
+  end;
+
+  func НаСледующий synonym MoveNext: Logical;
+     -- Переводит указатель на следующий элемент и возващает Истина
+     -- Если это невозможно - возвращает Ложь
+     if Q.EOF then
+       return False;
+     else
+       Q.Next;
+       return True;
+     end;
+  end;
+
+  func Сброс synonym Reset: Logical;
+     Q.First;
+     return true;
+  end;
+
+end

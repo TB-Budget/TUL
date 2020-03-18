@@ -1,0 +1,23 @@
+﻿class "";
+
+inclass
+  func Any(Iterator: Итераторы.Итератор): Logical;
+    while Iterator.MoveNext do
+      if Iterator.Current then
+        return True;
+      fi;
+    end;
+    Result = False;
+  end;
+
+  func All(Iterator: Итераторы.Итератор): Logical;
+    while Iterator.MoveNext do
+      if not Iterator.Current then
+        return False;
+      fi;
+    end;
+    Result = True;
+  end;
+inobject
+
+end
