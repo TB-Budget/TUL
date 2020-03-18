@@ -102,8 +102,12 @@ inobject
   func НаСледующий synonym MoveNext: Logical;
      -- Переводит указатель на следующий элемент и возващает Истина
      -- Если это невозможно - возвращает Ложь
-     self.current_ = self.readln;
-     return self.EOF and self.current_ <>nil;
+     if self.EOF then
+       return False;
+     else
+       self.current_ = self.readln;
+       return True;
+     end;
   end;
 
   func Сброс synonym Reset: Logical;

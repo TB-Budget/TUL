@@ -17,7 +17,7 @@
 class inherited io.Base "Обертка над текстовым файлом";
 
 inclass
-  func New(Path:String; mode:System.FileModes; encoding: TextFile.Encodings; BufSize:Integer): io.File;
+  func New(Path:String; mode:System.FileModes; encoding: TextFile.Encodings; BufSize:Integer=0): io.File;
     Result = Create;
     Result.raw_ = TextFile.Create(Path, mode, encoding, BufSize);
     if mode=fmCreate or mode=fmOpenWrite:
@@ -26,7 +26,7 @@ inclass
      elsif mode=fmOpenReadWrite then
        Result.writable_ = True;
        Result.readable_ = True;
-     elsif mode=fmOpenReadWrite then
+     elsif mode=fmOpenRead then
        Result.writable_ = False;
        Result.readable_ = True;
     fi;
