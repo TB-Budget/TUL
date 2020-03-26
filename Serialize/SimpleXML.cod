@@ -17,9 +17,15 @@
 class "Простейшее формирование XML";
 inclass public
 
-  func CreateEx(locUseBreakLine: logical = true): SimpleXML;
+  func CreateEx(locUseBreakLine: logical = true; locUseIndent: logical = true; locIndentSize: integer = 4): SimpleXML;
     Result = SimpleXML.Create;
     Result.UseBreakLine = locUseBreakLine;
+    if locUseBreakLine:
+      Result.UseIndent = locUseIndent;
+      if locUseIndent:
+        Result.IndentSize = locIndentSize;
+      fi;
+    fi;
   end;
 
   func EasyStrorage(src: String):Storage;
@@ -48,10 +54,24 @@ inclass public
 
 inobject private
 
-  UseBreakLine: logical;
+  UseBreakLine: logical; -- применять разрывы строк
+  UseIndent: logical; -- применять отступы (только если UseBreakLine)
+  IndentSize: integer; -- количество пробелов отступа (только если UseIndent)
   Data[]:String; --Набор данных XML. Массив используется для добавления в конец без переприсвоения
   Depth[]:String; --Список открытых тэгов. FIFO-буфер для закрытия тэгов.
+
+  func Indent: string; -- вычисление отступа
+    var locLevel: Integer;
+    var locResult: string;
+    if UseIndent:
+      locResult = RepStr(' ', IndentSize);
+      locLevel = LengthOfArray(Depth);
+      Return RepStr(locResult, locLevel);
+    fi;
+  end;
+
 inobject public
+
   proc AddInArray(var Array:Variant[]; Item:Variant);
   var l:Integer;
       l=LengthOfArray(Array);
@@ -109,8 +129,12 @@ inobject public
   end;
 
   proc ОткрытьТэг synonym OpenTag(Name: String; Attrib: Storage);
-    var I:Integer;
-    ToRes("<" + Name);
+    var i: Integer;
+    if UseIndent:
+      ToRes(Indent + "<" + Name);
+    else
+      ToRes("<" + Name);
+    fi;
     if Attrib <> nil:
       for i = 1..Attrib.Count do
          ToRes(" " + Attrib.IndexByNumber[i] + "='");
@@ -118,15 +142,27 @@ inobject public
          ToRes("'");
       od;
     fi;
-    ToRes(">");
+    if UseBreakLine:
+      ToRes(">" + Chr(13));
+    else
+      ToRes(">");
+    fi;
     InsertInArray(Depth, 1, Name);
   end;
 
   func ЗакрытьТэг synonym CloseTag: String;
-    var Name:String;
+    var Name: String;
     Name = Depth[1];
     DeleteFromArray(Depth,1);
-    ToRes(if(UseBreakLine, "</" + Name + ">" + Chr(13), "</" + Name + ">"));
+    if UseBreakLine:
+      if UseIndent:
+        ToRes(Indent + "</" + Name + ">" + Chr(13));
+      else
+        ToRes("</" + Name + ">" + Chr(13));
+      fi;
+    else
+      ToRes("</" + Name + ">");
+    fi;
     Result = Name;
   end;
 
