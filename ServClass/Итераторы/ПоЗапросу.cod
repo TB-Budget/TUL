@@ -1,15 +1,24 @@
-﻿class inherited Итераторы.Итератор "";
+﻿class inherited Итераторы.Итератор "Итератор, основанный на объекте запроса";
 
 inclass
-  func New(Records: class[] Record; Filter: String; xArgs:Storage=nil): Итераторы.ПоЗапросу;
+  func New(Records: class[] Record; Filter: String=""; xArgs:Storage=nil): Итераторы.ПоЗапросу;
     var i: Integer;
     Result = create;
     Result.Q = Query.Create(Records);
     Result.Q.Filter = Filter;
-    for i  = 1 .. xArgs.Count do
-      Result.Q.SetField(xArgs.IndexByNumber[i], xArgs.ItemsByNumber[i]);
+    if xArgs<> nil then
+      for i  = 1 .. xArgs.Count do
+        Result.Q.SetField(xArgs.IndexByNumber[i], xArgs.ItemsByNumber[i]);
+      end;
     end;
+
     Result.Q.Select;
+  end;
+
+  func FromQuery(Q: Query): Итераторы.ПоЗапросу;
+    --Итератор по полностью подготовленному и сделанному запросу.
+    Result = create;
+    Result.Q = Q;
   end;
 
 inobject private

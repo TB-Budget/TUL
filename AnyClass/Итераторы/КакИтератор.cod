@@ -23,6 +23,20 @@ inclass
     --TODO: сделать проверку через RTTI
   end;
 
+  func Ensure(MyObj: Variant): Итераторы.Итератор;
+    if MyObj is Итераторы.Итератор: return MyObj;
+    elsif varType(MyObj) = varArray then return Итераторы.OnArrayDense.New(MyObj as Variant[]);
+    elsif varType(MyObj) = varObject and
+         MyObj.ClassInfo.MemberByName('Current') <> nil and
+         MyObj.ClassInfo.MemberByName('MoveNext') <> nil and
+         MyObj.ClassInfo.MemberByName('Reset') <> nil:
+         return Итераторы.DuckIter.New(MyObj);
+    else
+      SetError(0, "Объект не может быть приведен к итератору: " + Str(MyObj));
+    end;
+
+  end;
+
 inobject private
     TrueObj: Object;
 

@@ -1,18 +1,33 @@
-﻿class "";
+﻿class "Функции для использования итераторов";
 
 inclass
-  func Any(Iterator: Итераторы.Итератор): Logical;
-    while Iterator.MoveNext do
-      if Iterator.Current then
+  func Any(Iterator: Variant): Logical;
+    var MyIter: Итераторы.Итератор;
+    MyIter = Итераторы.КакИтератор.Ensure(Iterator);
+    while MyIter.MoveNext do
+      if MyIter.Current then
         return True;
       fi;
     end;
     Result = False;
   end;
 
-  func All(Iterator: Итераторы.Итератор): Logical;
-    while Iterator.MoveNext do
-      if not Iterator.Current then
+  func AnyItem(Iterator: Variant; Criteria:Funcobj=nil): Variant;
+    var MyIter: Итераторы.Итератор;
+    MyIter = Итераторы.КакИтератор.Ensure(Iterator);
+    while MyIter.MoveNext do
+      if Criteria = nil: if MyIter.Current <> nil: return MyIter.Current; fi;
+        else if Criteria.Call1(MyIter.Current): return MyIter.Current; fi;
+      fi;
+    end;
+    Result = nil;
+  end;
+
+  func All(Iterator:Variant): Logical;
+    var MyIter: Итераторы.Итератор;
+    MyIter = Итераторы.КакИтератор.Ensure(Iterator);
+    while MyIter.MoveNext do
+      if not MyIter.Current then
         return False;
       fi;
     end;
