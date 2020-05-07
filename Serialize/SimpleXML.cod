@@ -72,60 +72,60 @@ inobject private
 
 inobject public
 
-  proc AddInArray(var Array:Variant[]; Item:Variant);
-  var l:Integer;
-      l=LengthOfArray(Array);
-      Array[l+1]=Item;
+  proc AddInArray (var Array: Variant[]; Item: Variant);
+    var l: Integer;
+    l=LengthOfArray(Array);
+    Array[l+1]=Item;
   end; 
 
-  proc ВРез synonym ToRes(more: String);
-     AddInArray(Data, more);
+  proc ВРез synonym ToRes (more: String);
+    AddInArray(Data, more);
   end;
 
-  Proc ВРезЭкран synonym ToResScreen(more: String);
-  var l: integer;
-  --кавычки
-  l = Pos('"', more);
-  if l <> 0:
-    ToResScreen(Substr(more, 1, l - 1));
-    ToRes("&quot;");
-    ToResScreen(Substr(more, l + 1, 255));
-    Return;
-  fi;
-  --апостроф
-  l = Pos("'", more);
-  if l <> 0:
-    ToResScreen(Substr(more, 1, l - 1));
-    ToRes("&apos;");
-    ToResScreen(Substr(more, l + 1, 255));
-    Return;
-  fi;
-  --амперсенд
-  l = Pos("&", more);
-  if l <> 0:
-    ToResScreen(Substr(more, 1, l - 1));
-    ToRes("&amp;");
-    ToResScreen(Substr(more, l + 1, 255));
-    Return;
-  fi;
-  --меньше
-  l = Pos('<', more);
-  if l <> 0:
-    ToResScreen(Substr(more, 1, l - 1));
-    ToRes("&lt;");
-    ToResScreen(Substr(more, l + 1, 255));
-    Return;
-  fi;
-  --больше
-  l = Pos('>', more);
-  if l <> 0:
-    ToResScreen(Substr(more, 1, l - 1));
-    ToRes("&gt;");
-    ToResScreen(Substr(more, l + 1, 255));
-    Return;
-  fi;
-  --Все проверки прошли - добавляем неэкранированно
-  ToRes(more);
+  proc ВРезЭкран synonym ToResScreen(more: String);
+    var l: integer;
+    -- кавычки
+    l = Pos('"', more);
+    if l <> 0:
+      ToResScreen(Substr(more, 1, l - 1));
+      ToRes("&quot;");
+      ToResScreen(Substr(more, l + 1, 255));
+      Return;
+    fi;
+    -- апостроф
+    l = Pos("'", more);
+    if l <> 0:
+      ToResScreen(Substr(more, 1, l - 1));
+      ToRes("&apos;");
+      ToResScreen(Substr(more, l + 1, 255));
+      Return;
+    fi;
+    -- амперсенд
+    l = Pos("&", more);
+    if l <> 0:
+      ToResScreen(Substr(more, 1, l - 1));
+      ToRes("&amp;");
+      ToResScreen(Substr(more, l + 1, 255));
+      Return;
+    fi;
+    -- меньше
+    l = Pos('<', more);
+    if l <> 0:
+      ToResScreen(Substr(more, 1, l - 1));
+      ToRes("&lt;");
+      ToResScreen(Substr(more, l + 1, 255));
+      Return;
+    fi;
+    -- больше
+    l = Pos('>', more);
+    if l <> 0:
+      ToResScreen(Substr(more, 1, l - 1));
+      ToRes("&gt;");
+      ToResScreen(Substr(more, l + 1, 255));
+      Return;
+    fi;
+    -- Все проверки прошли - добавляем неэкранированно
+    ToRes(more);
   end;
 
   proc ОткрытьТэг synonym OpenTag(Name: String; Attrib: Storage);
@@ -204,6 +204,11 @@ inobject public
       Result = Result + self.Data[i];
     end;
   end;
+
+  proc AddBreakLine synonym BreakLine;
+     AddInArray(Data, Chr(13));
+  end;
+
 
   proc ВФайл synonym ToFile(Path: String; Encoding:String='');
     var F: TextFile;
