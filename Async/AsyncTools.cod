@@ -26,7 +26,7 @@ inclass
 
   func Ensure(src: Variant): Variant;
     if src is AsyncResult then
-       return src.Get;
+       return src.Get_;
     else
        return src;
     end;
