@@ -1,5 +1,15 @@
-<?xml version="1.0" encoding="windows-1251"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <Properties Version="1">
   <Property Name="CalcSrv" Value="False"/>
   <Property Name="ProcSrv" Value="True"/>
 </Properties>
+<Items>
+  <Item Name="io"/>
+  <Item Name="Итераторы"/>
+  <Item Name="КакИтератор"/>
+  <Item Name="Расширения"/>
+  <Item Name="AnyLinks"/>
+  <Item Name="DecimalInt"/>
+  <Item Name="Link2Kind"/>
+  <Item Name="Unicode"/>
+</Items>

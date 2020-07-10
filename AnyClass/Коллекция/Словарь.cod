@@ -14,7 +14,7 @@
 --Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class inherited Итераторы.Итератор "Пара ключ-значение" synonym Dict;
+class inherited Коллекция.СортСловарь "Пара ключ-значение" synonym Dict;
 import Classes Коллекция.Методы;
 
 inobject public
@@ -38,11 +38,11 @@ inobject public
 
   -- Очистка всех данных
   proc Очистить Synonym Clear;
-    dataS = nil;
+    inherited Очистить;
     dataH = nil;
-    valueS = nil;
     valueH = nil;
     CleanCache;
+
   end;
 
   -- Добавление указанного элемента, при наличии - заменяется
@@ -89,7 +89,7 @@ inobject public
        -- Если ключ не найден - возвращается значение по умолчанию
        return default;
     elsif tmp[3] = -1:
-       return valueS[tmp[3]];
+       return valueS[tmp[2]];
     else
        return valueH[tmp[2], tmp[3]];
     end;
@@ -104,8 +104,6 @@ inobject public
       return True;
     fi;
   end;
-
-  --{ Функции поиска элемента
 
   func Найти synonym Search (const elem: Variant): Variant[];
     -- аргументы:
@@ -129,33 +127,6 @@ inobject public
        return [nil, tmpI, LengthOfArray(dataH[tmpI]) + 1];
     end;
   end;
-
-  func НайтиСорт synonym SearchSort (const elem: Variant): Variant[];
-    var first, last, mid, n: Integer;
-    n = Count;
-    first = 1;
-    last = n + 1;
-    mid = first + div(last - first, 2);
-    if n = 0 or Compare.Rich.Cmp(dataS[1], elem) = 1:
-      return [nil, 1, -1];
-    elsif Compare.Rich.Cmp(dataS[n], elem) = -1:
-      return [nil, n + 1, -1];
-    fi;
-    while (first < last) do
-      if Compare.Rich.Cmp(elem, dataS[mid]) <> 1:
-        last = mid;
-      else
-        first = mid + 1;
-      fi;
-      mid = first + div(last - first, 2);
-    od;
-    if dataS[last] = elem:
-      result = [dataS[last], last, -1];
-    else
-      result = [nil, last, -1];
-    fi;
-  end;
-  --}
 
   -- Реализация протокола итератора. Итератор перебирает ключи
   func Текущий synonym Current: Variant;
@@ -261,11 +232,9 @@ inobject private
 
   -- данные synonym data: variant[];  --собственно хранилище элементов
 
-  dataS[]: variant;  --Хранилище элементов на основе сортировки
-  valueS[]: variant;  --Значения значений на основе сортировки
   dataH[2]: variant;  --Хранилище элементов на основе хэшей (второй размер для разрешения коллизий)
   valueH[2]: variant;  --Значения значений на основе хэшей
-  nowpos: Integer; --Текущая позиция при переборе элементов
+ -- nowpos: Integer; --Текущая позиция при переборе элементов
   nowsubpos: Integer; --Текущая позиция коллизии при переборе элементов (-1 для сортированных)
 
   -- Кэшированные значения

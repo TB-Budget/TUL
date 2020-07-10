@@ -38,7 +38,7 @@ inobject public
      return False;
   end;
 
-  func ToArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
+  func  ВМассив synonym ToArray(MaxIter: Integer=0x7FFFFFFF): Variant[];
   var i: Integer;
     Result = [];
     i = 1;
