@@ -6,12 +6,12 @@ inclass
     Result = create;
     Result.Q = Query.Create(Records);
     Result.Q.Filter = Filter;
-    if xArgs<> nil then
+    if xArgs <> nil then
       for i  = 1 .. xArgs.Count do
         Result.Q.SetField(xArgs.IndexByNumber[i], xArgs.ItemsByNumber[i]);
       end;
     end;
-
+    Result.prefirst = True;
     Result.Q.Select;
   end;
 
@@ -23,6 +23,7 @@ inclass
 
 inobject private
   var Q: Query;
+  var prefirst: Logical;
 
 inobject public
   func Текущий synonym Current: Variant;
@@ -31,18 +32,19 @@ inobject public
   end;
 
   func НаСледующий synonym MoveNext: Logical;
-     -- Переводит указатель на следующий элемент и возващает Истина
-     -- Если это невозможно - возвращает Ложь
-     if Q.EOF then
-       return False;
-     else
-       Q.Next;
-       return True;
-     end;
+  -- Переводит указатель на следующий элемент и возващает Истина
+  -- Если это невозможно - возвращает Ложь
+    if prefirst then
+      prefirst = False;
+    else
+      Q.Next;
+    fi;
+    return not Q.EOF;
   end;
 
   func Сброс synonym Reset: Logical;
      Q.First;
+     self.prefirst = True;
      return true;
   end;
 
