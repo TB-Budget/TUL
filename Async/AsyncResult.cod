@@ -15,14 +15,19 @@
 --59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 
-class "Отложенный результат выполнения";
+class "Отложенный результат выполнения" synonym Promise;
 
 inclass
+   func Create: Promise;
+    Result = inherited Create;
+    AsyncLoop.Schedule(result);
+  end;
 
-inobject
+inobject private
+  _ready: Logical;
+  _result: Variant;
+inobject public
   id: String; --кеш для сверки
-  postprocess: FuncObj; --Дополнительная обработка результата
-
   func Equal(ob:AsyncResult):Logical;
     if ob = nil then
        return False;
@@ -30,26 +35,28 @@ inobject
     Result = (ob.id = self.id);
   end;
 
-  func ready:Logical;
-    SetError(0, 'Abstract method');
-    Result = false;
+
+  func Ready:Logical;
+    Result = self._ready;
   end;
 
-  proc Wait;
-    --Дожидаемся результата
-     while not ready do
-       sleep(1);
-       --UIWait.ExecuteDialog;
-    od;
+  func then_ synonym AutoPoll (aCallback: FuncObj): AfterFuture;
+    Result = AfterFuture.New(aCallback, self);
+  end;
+
+  func AResult:Variant;
+    Result = self._result;
   end;
 
   func Get_:Variant;
-    --Это безопасные куски, их можно писать помногу, но лучше иметь в начале
-    self.Wait;
+    while not self.ready do
+      AsyncLoop.Wait(0.1);
+    end;
+    return self.AResult;
   end;
 
   Proc Abort;
-    id = nil;
+    AsyncLoop.UnSchedule(self);
   end;
 
 

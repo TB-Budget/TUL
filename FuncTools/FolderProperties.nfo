@@ -1,6 +1,21 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <Properties Version="1">
   <Property Name="Title" Value="Элементы функционального программирования"/>
   <Property Name="CalcSrv" Value="True"/>
   <Property Name="ProcSrv" Value="True"/>
 </Properties>
+<Items>
+  <Item Name="Compare"/>
+  <Item Name="ApplyArg"/>
+  <Item Name="ClassMeth"/>
+  <Item Name="DuckFuncObj"/>
+  <Item Name="Elems"/>
+  <Item Name="EvalObject"/>
+  <Item Name="EvalVal"/>
+  <Item Name="Method"/>
+  <Item Name="FuncObj"/>
+  <Item Name="FuncTools"/>
+  <Item Name="Memoized"/>
+  <Item Name="ThisMethod"/>
+  <Item Name="Wrap"/>
+</Items>

@@ -1,0 +1,60 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2016
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited Wrap "Последовательное применение функций в фоновом режиме";
+
+inclass
+
+inobject
+   var Stack[]: FuncObj;
+   --{ Интерфейс для асинхрнонного выполнения:
+   func DoOne(data: Storage): Logical;
+   var args: Variant[];
+   var f: FuncObj;
+     args = nil;
+     if not data.FieldExists('f_result') then
+     -- первый заход
+       args = data.params as Variant[];
+     elsif data.f_result is AsyncResult: -- TODO: проверить!!!!
+       if data.f_result.ready:
+         args = [data.f_result.get];
+       else
+         return False;
+       fi;
+     else
+       args = [data.f_result];
+     fi;
+     if LengthOfArray(data.functions as Variant[]) = 0 then
+        --Все функции вычислены
+        return True;
+     else
+        f = data.functions[1];
+        DeleteFromArray(data.functions, 1);
+        data.f_result = f.Call(args);
+     end;
+     return False;
+   end;
+   -- }
+   func Вызвать synonym Call(Params:Variant[]):Variant;
+     Result = wPromise.Create;
+     Result.WorkFunc = self;
+     Result.WorkData = Storage.Create;
+     Result.WorkData.functions = self.Stack;
+     Result.WorkData.params = Params;
+     Result.res_field = 'f_result';
+   end;
+
+end

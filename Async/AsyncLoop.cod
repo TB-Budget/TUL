@@ -1,0 +1,75 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2017
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+class "Основной цикл асинхронного выполнения";
+
+inclass private
+  var APool[]: AsyncResult;
+  var Scheduler: Object;
+
+inclass public
+  proc InitScheduler;
+  --Экстендить с перекрытием эту процедуру, если нужен свой шедулер
+    var a: Class;
+    a = findClass("LoopTimer");
+    if a <> nil then
+      Scheduler = a.New(1000, 100);
+    fi;
+  end;
+  proc Wait(Delay:Numeric; Strict:Logical=True);
+    var one: AsyncResult;
+    var t: Numeric;
+    var z, n: Integer;
+    t = IntervalSec;
+    z = LengthOfArray(APool);
+    n = 0; --Выполненных задач
+    while (IntervalSec - t) < Delay and z > n do
+      one = APool[z];
+      DeleteFromArray(APool, z);
+      if one is Task then
+         (one as Task).Process;
+      fi;
+      if not one.ready then
+         InsertInArray(APool, 1, one);
+         n = n + 1;
+      fi;
+      z = LengthOfArray(APool);
+    end;
+    --Заканчиваем строгое ожидание
+    if (IntervalSec - t) < Delay and Strict then
+       Sleep(t + Delay - IntervalSec);
+    fi;
+  end;
+
+  proc Schedule(one: AsyncResult);
+     InsertInArray(APool, 1, one);
+     if Scheduler = nil then
+       InitScheduler;
+     fi;
+  end;
+
+  proc UnSchedule(one: AsyncResult);
+     var z:Integer;
+     z = SearchInArray(APool, one);
+     DeleteFromArray(APool, z);
+     if LengthOfArray(APool) = 0 then
+       Scheduler = nil;
+     fi;
+  end;
+inobject
+
+end
