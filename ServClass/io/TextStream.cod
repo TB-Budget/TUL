@@ -1,0 +1,96 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2020
+
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class inherited io.Base "Обёртка над автообъектом TextStream";
+
+
+inclass
+  func New(AO:AutoObject; mode:System.FileModes; BufSize:Integer=0): io.TextStream;
+    Result = Create;
+    Result.raw_ = AO;
+    if mode=fmCreate or mode=fmOpenWrite:
+       Result.writable_ = True;
+       Result.readable_ = False;
+     elsif mode=fmOpenReadWrite then
+       Result.writable_ = True;
+       Result.readable_ = True;
+     elsif mode=fmOpenRead then
+       Result.writable_ = False;
+       Result.readable_ = True;
+    fi;
+
+  end;
+
+inobject
+  var raw_: AutoObject;
+  var readable_:Logical;
+  var writable_:Logical;
+
+--{ Описание возможноситей
+  func Readable:Logical;
+    Result = self.readable_;
+  end;
+
+  func Writable:Logical;
+    Result = self.writable_;
+  end;
+
+  func Seekable:Logical;
+    Result = False;
+  end;
+--}
+
+  --{ Прототипы методов
+  proc flush;
+  end;
+
+  proc close;
+    --Закончить работу с потоком
+    self.raw_.Close;
+    self.raw_ = nil;
+  end;
+
+  func closed:Logical;
+    --Поток закрыт и не может быть использован
+    Result = (self.raw_ = nil);
+  end;
+
+  func EOF:Logical;
+    --Достигнут конец данных
+    Result = self.raw_.AtEndOfLine;
+  end;
+
+  func seek(offset:Integer; origin:Integer=0):Integer;
+    SetError(0, "TextStream is not seekable");
+  end;
+
+  func read(limit:Integer=-1):String;
+    if limit=-1 then
+      limit=self.Maxread;
+    end;
+    Result = self.raw_.Read(limit);
+  end;
+
+  func readln(limit:Integer=-1):String;
+    Result = self.raw_.ReadLine;
+  end;
+
+  proc write(value:String);
+    self.raw_.write(value);
+  end;
+ --}
+
+end
