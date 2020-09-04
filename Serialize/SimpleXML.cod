@@ -52,6 +52,13 @@ inclass public
     end;
   end;
 
+  proc AddInArray (var Array: Variant[]; Item: Variant);
+    var l: Integer;
+    l=LengthOfArray(Array);
+    Array[l+1]=Item;
+  end; 
+
+
 inobject private
 
   UseBreakLine: logical; -- применять разрывы строк
@@ -71,12 +78,6 @@ inobject private
   end;
 
 inobject public
-
-  proc AddInArray (var Array: Variant[]; Item: Variant);
-    var l: Integer;
-    l=LengthOfArray(Array);
-    Array[l+1]=Item;
-  end; 
 
   proc ВРез synonym ToRes (more: String);
     AddInArray(Data, more);
