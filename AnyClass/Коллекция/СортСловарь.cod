@@ -95,13 +95,13 @@ inobject public
     first = 1;
     last = n + 1;
     mid = first + div(last - first, 2);
-    if n = 0 or Compare.Rich.Cmp(dataS[1], elem) = 1:
+    if n = 0 or TUL.Compare.Rich.Cmp(dataS[1], elem) = 1:
       return [nil, 1, -1];
-    elsif Compare.Rich.Cmp(dataS[n], elem) = -1:
+    elsif TUL.Compare.Rich.Cmp(dataS[n], elem) = -1:
       return [nil, n + 1, -1];
     fi;
     while (first < last) do
-      if Compare.Rich.Cmp(elem, dataS[mid]) <> 1:
+      if TUL.Compare.Rich.Cmp(elem, dataS[mid]) <> 1:
         last = mid;
       else
         first = mid + 1;

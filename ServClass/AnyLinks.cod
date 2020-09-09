@@ -39,7 +39,7 @@ inclass public
   func MakeNew(Kind: string; Args: variant[] = nil): variant;
     var Iter: Итераторы.Итератор;
     Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Name"),
-                                              Compare.eq.New(Kind)),
+                                              TUL.Compare.eq.New(Kind)),
                                 catalog);
     if Iter.MoveNext then
        return Iter.Current.MakeNew(Args);
@@ -55,11 +55,11 @@ inclass public
     var arg: Link2Any.Args;
     if Kind = '' then
       Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Class_"),
-                                                Compare.eq.New(Obj.ClassType)),
+                                                TUL.Compare.eq.New(Obj.ClassType)),
                                   catalog);
     else
       Iter = Итераторы.Фильтр.New(Wrap.CreateEx(EvalObject.New("Name"),
-                                                Compare.eq.New(Kind)),
+                                                TUL.Compare.eq.New(Kind)),
                                   catalog);
     end;
     if Iter.MoveNext then

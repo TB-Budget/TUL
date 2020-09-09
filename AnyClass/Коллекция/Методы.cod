@@ -135,7 +135,7 @@ inclass  public
     for i = 2 .. size do
       active = MyArray[i];
       j = i - 1;
-      while (j >= 1) and (Compare.Rich.Compare(GetKey(MyArray[j]), GetKey(active)) = 1) do
+      while (j >= 1) and (TUL.Compare.Rich.Compare(GetKey(MyArray[j]), GetKey(active)) = 1) do
         -- "Проматываем" назад до места, куда надо вставить
         -- т.е. когда "наш" больше предыдущего
         MyArray[j + 1] = MyArray[j];
