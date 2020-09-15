@@ -1,0 +1,233 @@
+#Dynamic On;
+#Help `Базовая обертка над AutoObject
+       Позволяет работать с методами и свойствами AutoObject
+       как со своими собственными`;
+class "Базовая обертка над AutoObject";
+inclass public
+
+#Help `Параметр для AutoObject.Create(_OleClass)
+       Обязательно перекрывается в наследнике`;
+var _OleClass :String;
+
+#Help `Базовый "креатор"
+       Обязательно перекрывается в наследнике`;
+func TSelf synonym New (aObject :Variant = nil) :AutoObjectX;
+  if aObject is AutoObjectX:
+    Result = aObject as AutoObjectX;
+  else
+    Result = inherited Create;
+    if aObject is AutoObject:
+      Result._value = aObject;
+    elsif aObject = nil:
+      Result._value = AutoObject.Create(_OleClass);
+    fi;
+  fi;
+end;
+
+func Create :AutoObjectX;
+  Result = TSelf;
+end;
+
+--{ Реализация поддержки динамических полей и свойств
+    inclass private
+    func GetSelfRttiNames :Storage;
+    end;
+
+    SelfRttiNames :Storage := GetSelfRttiNames;
+
+    inclass public
+    #Help `Тип "внешнего" обработчика события GetField`;
+    type TGetFieldHandler = func(X :AutoObjectX; aName :String) :Variant;
+    #Help `Тип "внешнего" обработчика события SetField`;
+    type TSetFieldHandler = func(X :AutoObjectX; aName :String; aValue :Variant) :logical; -- не продолжаем SetField при result = false
+
+    inobject public
+    func GetField(aName :String) :Variant;
+      if _isSelfProp(aName): -- это свои поля
+        Return inherited GetField(aName);
+      else
+        Return OnGetField(aName);
+      fi;
+    end;
+
+    proc SetField(aName :String; aValue :Variant);
+      if _isSelfProp(aName): -- это свои поля
+        inherited SetField(aName, aValue);
+      else
+        OnSetField(aName, aValue);
+      fi;
+    end;
+    inobject private
+
+   #Help ` "Внешний" обработчик OnGetField`;
+    var _OnGetFieldHandlers  :TGetFieldHandler;
+   #Help ` "Внешний" обработчик OnSetField`;
+    var _OnSetFieldHandlers  :TSetFieldHandler; -- не продолжаем при result = false
+
+
+    func OnGetField(aName :String) :Variant;
+      if _OnGetFieldHandlers <> nil and ClosureOwner(_OnGetFieldHandlers) <> nil:
+        Return _OnGetFieldHandlers(Self, aName);
+      fi;
+      Result = Self[aName];
+    end;
+    proc OnSetField(aName :String; aValue :Variant);
+      if _OnSetFieldHandlers <> nil and ClosureOwner(_OnSetFieldHandlers) <> nil:
+        if not _OnSetFieldHandlers(Self, aName, aValue): -- не продолжаем при result = false
+          Return;
+        fi;
+      fi;
+      Self[aName] = aValue;
+    end;
+
+--}
+
+
+inobject public
+
+#Help `Вызывается в OnDestroy (перекрывается в наследниках)
+       Нужен для "правильной" зачистки всех AutoObject`;
+  proc _Clear;
+    if _MSScriptControl <> nil:
+      _MSScriptControl.Reset;
+    fi;
+  end;
+
+  proc OnDestroy;
+   if _AutoObject <> nil:
+     _Clear;
+     _AutoObject = nil;
+   fi;
+  end;
+
+
+  #Help ` Реализуется в наследниках
+          Создает представление текущего объекта (если это возможно)
+          в виде Storage, в котором любые значения полей будут
+            или Storage
+            или List
+            или чем-то еще...`;
+  func _AsStorage :Storage;
+    if _AutoObject <> nil:
+      Result = Storage.Create;
+    fi;
+  end;
+
+  #Help ` Реализуется в наследниках
+          Создает представление текущего объекта (если это возможно)
+          в виде List`;
+  func _AsList :List;
+    if _AutoObject <> nil:
+      Result = List.Create;
+    fi;
+  end;
+
+  #Default;
+  _Items[FieldName :String; Param :Variant[] = nil]: Variant get @_GetItems set @_SetItems;
+
+  var _Value :AutoObject = _AutoObject Set @_SetValue;
+
+inobject private
+
+  _AutoObject :AutoObject;
+  proc _SetValue(aValue :AutoObject);
+    _AutoObject = aValue;
+    _MSScriptControl.Run('SetCom', _AutoObject);
+  end;
+
+  func _GetItems(FieldName :String; Param :Variant[] = nil) :Variant;
+    var Res :Variant;
+    var vCount :integer = LengthOfArray(Param);
+    if vCount = 0: --это свойство
+      Res = _AutoObject.Invoke(FieldName);
+    elsif vCount = 1: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1]);
+    elsif vCount = 2: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2]);
+    elsif vCount = 3: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3]);
+    elsif vCount = 4: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4]);
+    elsif vCount = 5: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4], Param[5]);
+    elsif vCount = 6: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4], Param[5], Param[6]);
+    elsif vCount = 7: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4], Param[5], Param[6], Param[7]);
+    elsif vCount = 8: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4], Param[5], Param[6], Param[7], Param[8]);
+    elsif vCount = 9: --это метод с параметрами
+      Res = _AutoObject.Invoke(FieldName, Param[1], Param[2], Param[3], Param[4], Param[5], Param[6], Param[7], Param[8], Param[9]);
+    else
+      #Warning 'Казунин: !!! Пока не предусмотрено больше 9 параметров >>> надо доделать на 99?';
+    fi;
+    if Res is AutoObject:
+      Result = TSelf(Res); -- по умолчанию обборачиваем в текущего наследника AutoObjectX
+    else
+      Result = Res;
+    fi;
+  end;
+  proc _SetItems(FieldName :String; Param :Variant[] = nil; aValue :Variant);
+    _MSScriptControl_SetComField(FieldName, aValue);
+  end;
+---------------- блок поддержки для _SetItems --------------
+
+  #Help `Наследуется
+         Метод для определения принадлежности свойства к _AutoObject
+         Result = false - означает что свойство с именем aPropName относится к _AutoObject`;
+  func _isSelfProp(aPropName :String) :Logical;
+    Result = (SelfRttiNames.PropertiesNames as Storage).FieldExists(aPropName); #Warning 'Казунин: Пока не работает! Доделать! Обязательно искать в своем классе через RTTI!';
+    Result = aPropName[1] = '_'; -- это свои поля, пока не доделана реализация через SelfRttiNames
+  end;
+
+
+  #Help `Объект содержит метод для записи значения
+         в свойство _AutoObject по имени этого свойства
+         (короче - это костыль т.к. ДИЦ не реализовал эту возможность)`;
+  var _MSScriptControl :AutoObject := _MSScriptControl_ini;
+
+  func _MSScriptControl_ini :AutoObject;
+    Result = AutoObject.Create("MSScriptControl.ScriptControl");
+    try
+      Result.Language="vbscript";
+      Result.AddCode
+       (`Option Explicit
+         Public vCom
+         Public vField
+         Public vValue
+         Public vSelf
+         Sub SetComField(aField, aValue)
+           vField = aField
+           if IsObject(aValue) then
+             set vValue = aValue
+             vSelf.ExecuteStatement("set vCom."&vField&"=vValue")
+             set vValue = nothing
+           else
+             vValue = aValue
+             vSelf.ExecuteStatement("vCom."&vField&"=vValue")
+           end if
+         End Sub
+         Sub SetSelf(aSelf)
+           set vSelf = aSelf
+         End Sub
+         Sub SetCom(aCom)
+           set vCom = nothing
+           set vCom = aCom
+         End Sub`
+        );
+      Result.Run('SetSelf', Result); -- ссылку MSScriptControl во внутрь MSScriptControl в поле vSelf
+      if _AutoObject <> nil:
+        Result.Run('SetCom', _AutoObject);
+      fi;
+    except
+    end;
+  end;
+
+  #Help `Костыльный метод записи в свойство _AutoObject нового значения, используя имя свойства`;
+  Proc _MSScriptControl_SetComField(aProp :String; aValue :Variant);
+    _MSScriptControl.Run('SetComField', aProp, aValue);
+  end;
+
+
+end
+#Dynamic Off;
