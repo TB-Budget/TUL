@@ -74,7 +74,8 @@ inobject private
   Data[]:String; --Набор данных XML. Массив используется для добавления в конец без переприсвоения
   Depth[]:String; --Список открытых тэгов. FIFO-буфер для закрытия тэгов.
 
-  func Indent: string; -- вычисление отступа
+  #Help `  Вычисление отступа.`;
+  func Indent: string;
     var locLevel: Integer;
     var locResult: string;
     if UseIndent:
@@ -86,10 +87,12 @@ inobject private
 
 inobject public
 
+  #Help `  Добавление произвольной строки.`;
   proc ToRes synonym ВРез (more: String);
     AddInArray(Data, more);
   end;
 
+  #Help `  Добавление произвольной строки с заменой спецсимоволов на встроенные сущности xml.`;
   proc ToResScreen synonym ВРезЭкран(more: String);
     var l: integer;
     -- кавычки
@@ -192,7 +195,7 @@ inobject public
            в котором имя поля соответствует идентификатору атрибута,
            а значение поля соответствует значению идентификатора
            `;
-  proc CreateTag synonym CreateElement,СоздатьТэг,СоздатьЭлемент (Name: String; Content: String = nil; Attrib: Storage = nil);
+  proc CreateElement synonym CreateTag, СоздатьЭлемент, СоздатьТэг (Name: String; Content: String = nil; Attrib: Storage = nil);
     var i: Integer;
     if (Content = nil):
       if UseIndent:
@@ -237,11 +240,16 @@ inobject public
     end;
   end;
 
+  #Help `  Вставка в документ разрыва строки`;
   proc AddBreakLine synonym BreakLine;
      AddInArray(Data, Chr(13));
   end;
 
-
+  #Help `  Формирование xml-файла.
+           Параметры:
+           Path - место сохранения файла;
+           Encoding - кодировка (по умолчанию windows-1251).
+           `;
   proc ToFile synonym ВФайл(Path: String; Encoding:String='');
     var F: TextFile;
     var Fenc: TextFile.Encodings;
