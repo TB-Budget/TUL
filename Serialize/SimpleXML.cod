@@ -17,6 +17,13 @@
 class "Простейшее формирование XML";
 inclass public
 
+  #Help `  Создание экземпляра класса SimpleXML.
+           Параметры:
+           locUseBreakLine - применять перенос строк;
+           locUseIndent - применять отступы (только если UseBreakLine)
+           locIndentSize - количество пробелов отступа (только если UseIndent)
+           Метод только создает объект и устанавливает управляющие параметры формирования строк.
+           `;
   func CreateEx(locUseBreakLine: logical = true; locUseIndent: logical = true; locIndentSize: integer = 4): SimpleXML;
     Result = SimpleXML.Create;
     Result.UseBreakLine = locUseBreakLine;
@@ -79,11 +86,11 @@ inobject private
 
 inobject public
 
-  proc ВРез synonym ToRes (more: String);
+  proc ToRes synonym ВРез (more: String);
     AddInArray(Data, more);
   end;
 
-  proc ВРезЭкран synonym ToResScreen(more: String);
+  proc ToResScreen synonym ВРезЭкран(more: String);
     var l: integer;
     -- кавычки
     l = Pos('"', more);
@@ -129,7 +136,15 @@ inobject public
     ToRes(more);
   end;
 
-  proc ОткрытьТэг synonym OpenTag(Name: String; Attrib: Storage);
+  #Help `  Создание открывающего тэга элемента XML.
+           Параметры:
+           Name - Идентификатор;
+           Attrib - атрибуты.
+           Атрибуты передаются в формате проинициализированного Storage,
+           в котором имя поля соответствует идентификатору атрибута,
+           а значение поля соответствует значению идентификатора
+           `;
+  proc OpenTag synonym ОткрытьТэг(Name: String; Attrib: Storage = nil);
     var i: Integer;
     if UseIndent:
       ToRes(Indent + "<" + Name);
@@ -151,7 +166,8 @@ inobject public
     InsertInArray(Depth, 1, Name);
   end;
 
-  func ЗакрытьТэг synonym CloseTag: String;
+  #Help `  Создание закрывающего тэга элемента XML.`;
+  func CloseTag synonym ЗакрытьТэг: String;
     var Name: String;
     Name = Depth[1];
     DeleteFromArray(Depth,1);
@@ -167,7 +183,16 @@ inobject public
     Result = Name;
   end;
 
-  proc СоздатьТэг synonym CreateTag(Name: String; Content: String; Attrib: Storage);
+  #Help `  Создание элемента XML, включающего содержимое элемента, атрибуты и закрывающий тэг.
+           Параметры:
+           Name - Идентификатор элемента;
+           Content - содержимое элемента;
+           Attrib - атрибуты.
+           Атрибуты передаются в формате проинициализированного Storage,
+           в котором имя поля соответствует идентификатору атрибута,
+           а значение поля соответствует значению идентификатора
+           `;
+  proc CreateTag synonym CreateElement,СоздатьТэг,СоздатьЭлемент (Name: String; Content: String = nil; Attrib: Storage = nil);
     var i: Integer;
     if (Content = nil):
       if UseIndent:
@@ -194,9 +219,15 @@ inobject public
     fi;
   end;
 
-  func ОднойСтрокой synonym OneString(Encoding: String='windows-1251'): String;
-  -- Представление набранного XML качестве строки, прописав кодировку в заголовок
-  -- !!! Истинная кодировка символов остается 1251!!!
+  #Help `  Вставка в документ содержимого, не предназначенного для синтаксического анализа.`;
+  proc CreateComment synonym СоздатьКомментарий (Content: String);
+    ToRes('<!--' + Content + '-->');
+  end;
+
+  #Help `  Представление набранного XML качестве строки, прописав кодировку в заголовок.
+           !!! Истинная кодировка символов остается 1251!!!
+           `;
+  func OneString synonym ОднойСтрокой(Encoding: String='windows-1251'): String;
     var i, ii: Integer;
     Result = '<?xml version="1.0" encoding="'+encoding+'"?>'+chr(10);
     ii = LengthOfArray(self.Data);
@@ -211,7 +242,7 @@ inobject public
   end;
 
 
-  proc ВФайл synonym ToFile(Path: String; Encoding:String='');
+  proc ToFile synonym ВФайл(Path: String; Encoding:String='');
     var F: TextFile;
     var Fenc: TextFile.Encodings;
     if Encoding = '' or Encoding = 'win1251' or Encoding = '1251':
@@ -238,4 +269,5 @@ inobject public
     F.Write(self.OneString(Encoding));
     F.Flush;
   end;
+
 end
