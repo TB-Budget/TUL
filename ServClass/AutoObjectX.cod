@@ -18,6 +18,8 @@ func TSelf synonym New (aObject :Variant = nil) :AutoObjectX;
     Result = inherited Create;
     if aObject is AutoObject:
       Result._value = aObject;
+    elsif aObject <> nil and aObject is String:
+      Result._value = AutoObject.Create(aObject as String);
     elsif aObject = nil:
       Result._value = AutoObject.Create(_OleClass);
     fi;
