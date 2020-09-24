@@ -9,9 +9,23 @@ inclass public
        Обязательно перекрывается в наследнике`;
 var _OleClass :String;
 
+#Help `Базовый метод приведения типа Variant к своему
+       Обязательно перекрывается в наследнике`;
+func TSelf(aObject :Variant = nil) :AutoObjectX;
+  Result = aObject as AutoObjectX;
+end;
+
+
+#Help `Вызывается в потомке и последовательно в предках (через inherited CreateAsSelf)
+       пока не будет создан наиболее подходящий по параметру aObject к классу потомка`;
+func CreateAsSelf(aObject :Variant = nil) :AutoObjectX; -- в текущем варианте - просто создаем новый
+  Result = AutoObjectX.CreateEx(aObject); -- жестко создаем экземпляр кдасса AutoObjectX
+end;
+
+
 #Help `Базовый "креатор"
        Обязательно перекрывается в наследнике`;
-func TSelf synonym New (aObject :Variant = nil) :AutoObjectX;
+func CreateEx synonym New (aObject :Variant = nil) :AutoObjectX;
   if aObject is AutoObjectX:
     Result = aObject as AutoObjectX;
   else
@@ -20,14 +34,17 @@ func TSelf synonym New (aObject :Variant = nil) :AutoObjectX;
       Result._value = aObject;
     elsif aObject <> nil and aObject is String:
       Result._value = AutoObject.Create(aObject as String);
-    elsif aObject = nil:
+    elsif aObject = nil and _OleClass <> nil:
       Result._value = AutoObject.Create(_OleClass);
     fi;
   fi;
 end;
 
+
+
+
 func Create :AutoObjectX;
-  Result = TSelf;
+  Result = CreateEx;
 end;
 
 --{ Реализация поддержки динамических полей и свойств
@@ -164,7 +181,7 @@ inobject private
       #Warning 'Казунин: !!! Пока не предусмотрено больше 9 параметров >>> надо доделать на 99?';
     fi;
     if Res is AutoObject:
-      Result = TSelf(Res); -- по умолчанию обборачиваем в текущего наследника AutoObjectX
+      Result = CreateAsSelf(Res); -- по умолчанию оборачиваем в текущего наследника AutoObjectX
     else
       Result = Res;
     fi;
