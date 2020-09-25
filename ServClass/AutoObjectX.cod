@@ -40,12 +40,53 @@ func CreateEx synonym New (aObject :Variant = nil) :AutoObjectX;
   fi;
 end;
 
-
-
-
 func Create :AutoObjectX;
   Result = CreateEx;
 end;
+
+
+
+#Help `Получаем Storage с именами полей совпадающими с именами полей _AutoObject
+       Реализуется в потомках
+       `;
+--.InterfaceName :String
+--.PropertiesNames :Storage {Field1 = PropertyType1:string ...}
+--.MethodsNames :Storage {Meth1 = {"Args"  : [Type1,Type2...], RetValMeth1:TypeRet} ...}
+func _AutoObjectRTTI(AO :AutoObject; Param :Storage = nil) :Storage;
+  Result = Storage.Create;
+end;
+
+#Help `Копируем данные из FromAO: AutoObject в ToStorage :Storage
+       Копируем по тем же именам свойств, что в AOStruct :Storage
+       Результат - ToStorage
+       `;
+func AutoObjectToStorge(FromAO: AutoObject; AOStruct :Storage = nil; ToStorage :Storage = nil) :Storage;
+  if AOStruct = nil and ToStorage = nil:
+    return;
+  fi;
+  if AOStruct = nil : -- режим обновления полей существующих в ToStorge
+    AOStruct = Storage.Create;
+    AOStruct.Assign(ToStorage);
+    Result = ToStorage;
+  elsif ToStorage = nil:
+    Result = Storage.Create;
+  else
+    Result = ToStorage;
+  fi;
+  var vFieldName :String;
+  for var j = 1..AOStruct.count do
+    vFieldName = AOStruct.IndexByNumber[j];
+    var vFieldValue :Variant = FromAO.Invoke(vFieldName);
+    if not Result.FieldExists(vFieldName) and vFieldValue = nil:
+      -- не пишем если нет поля в результате и писать нечего
+      -- !!!! Нужен отдельный вариант AutoObjectToStorge с полным копированием
+    else
+      Result[vFieldName] = vFieldValue;
+    fi;
+  od;
+end;
+
+
 
 --{ Реализация поддержки динамических полей и свойств
     inclass private
@@ -134,15 +175,67 @@ inobject public
 
   #Help ` Реализуется в наследниках
           Создает представление текущего объекта (если это возможно)
-          в виде List`;
+          в виде List где каждый элемент-автообъект в виде _AsList или _AsStorage`;
   func _AsList :List;
     if _AutoObject <> nil:
       Result = List.Create;
     fi;
   end;
 
+
+  #Help ` Реализуется в наследниках
+          Проверка на возможность использования свойства _List`;
+  func _IsList :Logical;
+  end;
+
+  #Help ` Реализуется в наследниках
+          Создает представление текущего объекта (если это возможно)
+          в виде List`;
+  func _AsListValue :List;
+    if _IsList:
+      Result = List.Create;
+      for var j = _ListBegin .. (_ListCount - 1 + _ListBegin) do
+        Result.Add(_List[j]);
+      od;
+    fi;
+  end;
+
+  #Help ` Реализуется в наследниках
+          Создает представление текущего объекта (если это возможно)
+          в виде Storage`;
+  func _AsStorageValue :Storage;
+    if not _IsList:
+      if  _RTTI <> nil and _RTTI.PropertiesNames is Storage:
+        var PropertiesNames :Storage = _RTTI.PropertiesNames as Storage;
+        Result = Storage.Create;
+        for var j = 1..PropertiesNames.Count do
+          var vFieldName :String = PropertiesNames.IndexByNumber[j];
+          if VarType(PropertiesNames[vFieldName]) = VarArray: -- если массив, то это расшифровка метода, его параметров и типа результата
+            -- ничего не делаем для методов
+          else -- это свойство
+            var vFieldValue :Variant = Self[vFieldName];
+            if not Result.FieldExists(vFieldName) and vFieldValue = nil:
+              -- не пишем если нет поля в результате и писать нечего
+            else
+              Result[vFieldName] = vFieldValue;
+            fi;
+          fi;
+        od;
+      fi;
+    fi;
+  end;
+
+
   #Default;
-  _Items[FieldName :String; Param :Variant[] = nil]: Variant get @_GetItems set @_SetItems;
+  #Help ` позволяет обращатся к self как к Storage
+          При использовании второго индекса Param:Variant[]
+          позволяет вызывать методы из _AutoObject
+          Пример:
+          Self['Item',[index]] - аналог _AutoObject.Item(index)`;
+  _Items[FieldName :String; Param :Variant[] = nil]: Variant get @_GetItem set @_SetItem;
+
+  #Help ` позволяет обращатся к _AutoObject как к List по целочисленным индексам`;
+  _List[index :Integer]: Variant get @_GetListItem set @_SetListItem;
 
   var _Value :AutoObject = _AutoObject Set @_SetValue;
 
@@ -154,7 +247,28 @@ inobject private
     _MSScriptControl.Run('SetCom', _AutoObject);
   end;
 
-  func _GetItems(FieldName :String; Param :Variant[] = nil) :Variant;
+  var _RTTI :Storage := _AutoObjectRTTI(_AutoObject);
+
+
+
+  #Help ` Первичный индекс. Перекрывается в наследниках`;
+  var _ListBegin :Integer := 1;
+
+  #Help ` Реализуется в наследниках`;
+  func _ListCount :Integer;
+    Result = Self.Count; -- это пример использования, - аналог _AutoObject.Count
+  end;
+
+  #Help ` Реализуется в наследниках`;
+  func _GetListItem(index :Integer) :Variant;
+    Result = _Items['Item',[index]]; -- это пример использования, - аналог _AutoObject.Item(index)
+  end;
+
+  #Help ` Реализуется в наследниках`;
+  proc _SetListItem(index :Integer; aValue :Variant);
+  end;
+
+  func _GetItem(FieldName :String; Param :Variant[] = nil) :Variant;
     var Res :Variant;
     var vCount :integer = LengthOfArray(Param);
     if vCount = 0: --это свойство
@@ -186,7 +300,7 @@ inobject private
       Result = Res;
     fi;
   end;
-  proc _SetItems(FieldName :String; Param :Variant[] = nil; aValue :Variant);
+  proc _SetItem(FieldName :String; Param :Variant[] = nil; aValue :Variant);
     _MSScriptControl_SetComField(FieldName, aValue);
   end;
 ---------------- блок поддержки для _SetItems --------------
