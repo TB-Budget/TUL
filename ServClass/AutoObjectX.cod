@@ -24,7 +24,9 @@ end;
 
 
 #Help `Базовый "креатор"
-       Обязательно перекрывается в наследнике`;
+       Обязательно перекрывается в наследнике
+       параметр aObject может быть AutoObject,
+       или строкой OleClassName`;
 func CreateEx synonym New (aObject :Variant = nil) :AutoObjectX;
   if aObject is AutoObjectX:
     Result = aObject as AutoObjectX;
