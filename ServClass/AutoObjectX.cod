@@ -239,11 +239,17 @@ inobject public
   #Help ` позволяет обращатся к _AutoObject как к List по целочисленным индексам`;
   _List[index :Integer]: Variant get @_GetListItem set @_SetListItem;
 
-  var _Value :AutoObject = _AutoObject Set @_SetValue;
+  var _Value :AutoObject get @_GetValue Set @_SetValue;
 
 inobject private
 
   _AutoObject :AutoObject;
+
+  #Help ` Реализуется в наследниках`;
+  func _GetValue :AutoObject;
+    Result = _AutoObject;
+  end;
+
   proc _SetValue(aValue :AutoObject);
     _AutoObject = aValue;
     _MSScriptControl.Run('SetCom', _AutoObject);
