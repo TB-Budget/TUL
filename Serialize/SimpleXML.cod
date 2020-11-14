@@ -49,6 +49,18 @@ inclass public
     Result = myStorage;
   end;
 
+  proc AddChk(attr: Storage; key: String; val: String);
+    if key <> '' and val <> '' then
+      attr.Items[key] = val;
+    fi;
+  end;
+
+  proc AddChkN(attr: Storage; key: String; val: Numeric; acc: Integer=0);
+    if key <> '' and val <> 0 then
+      attr.Items[key] = Str(val, acc);
+    fi;
+  end;
+
   func ScreenStr(src: String): String;
   var tmp: SimpleXML;
   var i, ii: Integer;
