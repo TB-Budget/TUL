@@ -49,7 +49,11 @@ inobject
     xd.async = false;
     xd.validateOnParse = true;
     xd.resolveExternals = true;
-    xd.load(DocPath);
+    if DocPath[1] = '<':
+      xd.loadXML(DocPath);
+    else
+      xd.load(DocPath);
+    fi;
 
     -- Return validation results
     if (xd.parseError.errorCode <> 0):
