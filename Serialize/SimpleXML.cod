@@ -150,18 +150,30 @@ inobject public
     InsertInArray(Depth, 1, Name);
   end;
 
-  func ЗакрытьТэг synonym CloseTag: String;
+  func ЗакрытьТэг synonym CloseTag(IgnoreIndent: logical = false): String;
     var Name: String;
     Name = Depth[1];
     DeleteFromArray(Depth,1);
     if UseBreakLine:
       if UseIndent:
-        ToRes(Indent + "</" + Name + ">" + Chr(13));
+        if IgnoreIndent:
+          ToRes("</" + Name + ">" + Chr(13));
+        else
+          ToRes(Indent + "</" + Name + ">" + Chr(13));
+        fi;
       else
         ToRes("</" + Name + ">" + Chr(13));
       fi;
     else
-      ToRes("</" + Name + ">");
+      if UseIndent:
+        if IgnoreIndent:
+          ToRes("</" + Name + ">");
+        else
+          ToRes(Indent + "</" + Name + ">");
+        fi;
+      else
+        ToRes("</" + Name + ">");
+      fi;
     fi;
     Result = Name;
   end;
@@ -189,7 +201,7 @@ inobject public
     else
       OpenTag(Name, Attrib);
       ToResScreen(Content);
-      CloseTag;
+      CloseTag(true);
     fi;
   end;
 
