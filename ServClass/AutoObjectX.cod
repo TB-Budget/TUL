@@ -273,7 +273,11 @@ inobject private
   end;
 
   #Help ` Реализуется в наследниках`;
+  #if version < 10.4 then
   proc _SetListItem(index :Integer; aValue :Variant);
+  #else
+  proc _SetListItem(aValue :Variant; index :Integer);
+  #end
   end;
 
   func _GetItem(FieldName :String; Param :Variant[] = nil) :Variant;
@@ -308,7 +312,11 @@ inobject private
       Result = Res;
     fi;
   end;
+#if version < 10.4 then
   proc _SetItem(FieldName :String; Param :Variant[] = nil; aValue :Variant);
+#else
+  proc _SetItem(aValue :Variant; FieldName :String; Param :Variant[] = nil);
+#end
     _MSScriptControl_SetComField(FieldName, aValue);
   end;
 ---------------- блок поддержки для _SetItems --------------
