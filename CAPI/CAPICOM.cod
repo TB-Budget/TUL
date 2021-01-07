@@ -1,4 +1,4 @@
-class "";
+п»їclass "";
 inclass
 var CAPICOM_ENCODE_ANY:Integer= 0xffffffff;
 var CAPICOM_ENCODE_BASE64:Integer= 0;
@@ -10,17 +10,11 @@ var CAPICOM_ENCODE_BINARY:Integer= 1;
     var SD, CPSigner: AutoObject;
     var res:String;
     SD = AutoObject.Create('CAPICOM.SignedData');
-    if CPSigner = nil:
-      CPSigner = AutoObject.Create("CAPICOM.Signer");
-  --    CPSigner.TSAAddress = "http://qs.cryptopro.ru/tsp/tsp.srf"; --Укажите правильный адрес службы штампов времени
-  --    CPSigner.TSAAddress = "http://tax4.tensor.ru/tsp-tensor_gost2012/tsp.srf"; --Укажите правильный адрес службы штампов времени
-  --    CPSigner.TSAAddress = "http://tsp.taxcom.ru/tsp/tsp.srf"; --Укажите правильный адрес службы штампов времени
-    fi;
+    CPSigner = AutoObject.Create("CAPICOM.Signer");
     CPSigner.Certificate = cert;
     srcBO = BinaryObject.Create;
     src = TextFile.Create(FilePath, System.fmOpenRead, TextFile.Binary);
     srcBO.AsString  = src.Read(src.Size);
-    --SD.Content = TUL.Unicode.BOToPseudoByte(srcBO);
     SD.Content = srcBO;
     res = SD.Sign(CPSigner, detached, CAPICOM_ENCODE_BASE64) as String;
     tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
