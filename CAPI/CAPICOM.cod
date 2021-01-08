@@ -1,8 +1,124 @@
 ﻿class "";
 inclass
-var CAPICOM_ENCODE_ANY:Integer= 0xffffffff;
-var CAPICOM_ENCODE_BASE64:Integer= 0;
-var CAPICOM_ENCODE_BINARY:Integer= 1;
+
+
+--  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_DESCRIPTION = 2;
+--  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_NAME = 1;
+--  CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME = 0;
+--  CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT = 0;
+--  CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY = 2;
+--  CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN = 1;
+--  CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE = 1
+--  CAPICOM_VERIFY_SIGNATURE_ONLY = 0;
+--  CERT_KEY_SPEC_PROP_ID = 6;
+
+
+
+const CAPICOM_PROPID_KEY_PROV_INFO :Integer = 2;
+
+const CAPICOM_CERTIFICATE_FIND_SHA1_HASH :Integer = 0;
+const CAPICOM_CERTIFICATE_FIND_SUBJECT_NAME :Integer = 1;
+const CAPICOM_CERTIFICATE_FIND_ISSUER_NAME :Integer = 2;
+const CAPICOM_CERTIFICATE_FIND_ROOT_NAME :Integer = 3;
+const CAPICOM_CERTIFICATE_FIND_TEMPLATE_NAME :Integer = 4;
+const CAPICOM_CERTIFICATE_FIND_EXTENSION :Integer = 5;
+const CAPICOM_CERTIFICATE_FIND_EXTENDED_PROPERTY :Integer = 6;
+const CAPICOM_CERTIFICATE_FIND_APPLICATION_POLICY :Integer = 7;
+const CAPICOM_CERTIFICATE_FIND_CERTIFICATE_POLICY :Integer = 8;
+const CAPICOM_CERTIFICATE_FIND_TIME_VALID :Integer = 9;
+const CAPICOM_CERTIFICATE_FIND_TIME_NOT_YET_VALID :Integer = 10;
+const CAPICOM_CERTIFICATE_FIND_TIME_EXPIRED :Integer = 11;
+const CAPICOM_CERTIFICATE_FIND_KEY_USAGE :Integer = 12;
+
+
+const CAPICOM_DIGITAL_SIGNATURE_KEY_USAGE :Integer = 0x00000080;
+const CAPICOM_E_CANCELLED :Integer = -2138568446;
+const CAPICOM_INFO_SUBJECT_SIMPLE_NAME :Integer = 0;
+
+
+
+const CAPICOM_ENCODE_ANY :Integer= 0xffffffff;
+const CAPICOM_ENCODE_BASE64 :Integer= 0;
+const CAPICOM_ENCODE_BINARY :Integer= 1;
+
+-- CAPICOM.Store >> .open param StoreLocation
+const CAPICOM_MEMORY_STORE :Integer = 0;--The store is a memory store. Any changes in the contents of the store are not persisted.
+const CAPICOM_LOCAL_MACHINE_STORE :Integer = 1;--The store is a local machine store. Local machine stores can be read/write stores only if the user has read/write permissions. If the user has read/write permissions and if the store is opened read/write, then changes in the contents of the store are persisted.
+const CAPICOM_CURRENT_USER_STORE :Integer = 2;--default - The store is a current user store. A current user store may be a read/write store. If it is, changes in the contents of the store are persisted.
+const CAPICOM_ACTIVE_DIRECTORY_USER_STORE :Integer = 3;--The store is an Active Directory store. Active Directory stores can be opened only in read-only mode. Certificates cannot be added to or removed from Active Directory stores.
+const CAPICOM_SMART_CARD_USER_STORE :Integer = 4;--Stores support smart card–based certificate stores. The store is the group of present smart cards. Introduced in CAPICOM 2.0.
+
+-- CAPICOM.Store >> .open param StoreName
+const CAPICOM_CA_STORE :String = "CA";--CA store. This store is used to store intermediate CA certificates.
+const CAPICOM_MY_STORE :String = "My";--default - My store. This store is used for a user's personal certificates.
+const CAPICOM_OTHER_STORE :String = "AddressBook";--AddressBook store. This store is used to keep the certificates of others.
+const CAPICOM_ROOT_STORE :String = "Root";--Root store. This store is used to store the root CA and self-signed, trusted certificates.
+
+-- CAPICOM.Store >> .open param OpenMode
+Const CAPICOM_STORE_OPEN_READ_ONLY :Integer = 0;--default
+Const CAPICOM_STORE_OPEN_READ_WRITE :Integer = 1;
+Const CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED :Integer = 2;--Open the store in read/write mode if the user has read/write permissions; otherwise, open the store in read-only mode.
+Const CAPICOM_STORE_OPEN_EXISTING_ONLY :Integer = 128;
+Const CAPICOM_STORE_OPEN_INCLUDE_ARCHIVED :Integer = 256;
+
+-- CAPICOM.Certificate >> .load param KeyStorageFlag
+const CAPICOM_KEY_STORAGE_DEFAULT :Integer = 0;--default  - Default key storage.
+const CAPICOM_KEY_STORAGE_EXPORTABLE :Integer = 1;--The key is exportable.
+const CAPICOM_KEY_STORAGE_USER_PROTECTED :Integer = 2;--The key is user protected.
+
+-- CAPICOM.Certificate >> .load param KeyLocation
+const CAPICOM_CURRENT_USER_KEY :Integer = 0;--default  - The key is a user key.
+const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
+
+  func LoadCert(aFileName :String; aPassword :String = nil; aKeyStorageFlag :Integer = CAPICOM_KEY_STORAGE_DEFAULT; aKeyLocation:Integer = CAPICOM_CURRENT_USER_KEY) :AutoObject;
+    if ExistFile(aFileName):
+      Result = AutoObject.Create('CAPICOM.Certificate.3');
+      Result.Load(aFileName, aPassword, aKeyStorageFlag, aKeyLocation);
+    fi;
+  end;
+
+  func OpenStore(aStoreLocation :Variant = nil; aStoreName :Variant = nil; aOpenMode :Variant = nil) :AutoObject;
+    Result = AutoObject.Create('CAPICOM.Store');
+    Result.Open
+     (if(aStoreLocation is Integer, aStoreLocation as Integer, CAPICOM_CURRENT_USER_STORE)
+     ,if(aStoreName is String, aStoreName as String, CAPICOM_MY_STORE)
+     ,if(aOpenMode is Integer, aOpenMode as Integer, CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED)
+     );
+  end;
+
+
+  func StoreAddCert(aCert :Variant; aStore :Variant) :AutoObject;
+    var vCert :AutoObject;
+    var vStore :AutoObject;
+    -- анализ Cert
+    if aCert is AutoObject:
+      vCert = aCert as AutoObject;
+    elsif aCert is String:
+      var vCertS :String = aCert as String;
+      if ExistFile(vCertS):
+        vCert = LoadCert(vCertS);
+      else
+        vCert = AutoObject.Create('CAPICOM.Certificate.3');
+        vCert.Import(vCertS);
+      fi;
+    elsif aCert is Storage: -- это файл с доп.параметрами для Load
+      vCert = LoadCert(aCert.FileName  as String, aCert.Password as String, aCert.KeyStorageFlag as Integer, aCert.KeyLocation as Integer);
+    fi;
+    if vCert <> nil:
+      -- анализ Store
+      if aStore is AutoObject:
+        vStore = aStore as AutoObject;
+      elsif aStore is Storage:
+        vStore = OpenStore(aStore.StoreLocation, aStore.StoreName, aStore.OpenMode);
+      else
+        vStore = OpenStore;
+      fi;
+      if vStore <> nil:
+        vStore.Add(vCert);
+        Result = vCert;
+      fi;
+    fi;
+  end;
 
   proc SignFileToFile(FilePath:String; cert: AutoObject; detached: Logical);
     var src, tgt: TextFile;
@@ -21,16 +137,183 @@ var CAPICOM_ENCODE_BINARY:Integer= 1;
     tgt.Write(res);
   end;
 
-  func  CertByThumbprint(t: String):AutoObject;
-    var S:AutoObject;
-    S = AutoObject.Create('CAPICOM.Store');
-    S.Open;
-    for var i = 1..S.Certificates.Count do
-      if S.Certificates.Item[i].Thumbprint = t:
-        Result = S.Certificates.Item[i];
-        Break;
+
+  func  CertByThumbprint(aThumbprint: String; aCertificates: AutoObject = OpenStore.Certificates as AutoObject; aFindValidOnly: Logical = false):AutoObject;
+    aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_SHA1_HASH, aThumbprint, aFindValidOnly]], aCertificates);
+    if aCertificates.Count = 1:
+      Result = aCertificates.Item[1];
+    fi;
+  end;
+
+
+  #Help ` Отбор коллекции сертификатов из коллекции aCertificates по массивами условий aFind
+          Результат: AutoObject - CAPICOM.Certificates
+          при aCertificates = nil - формируем aCertificates из CURRENT_USER_STORE/MY_STORE
+                              с максимальными правами на полученные сертификаты
+          при aFind = nil - выбираем все сертификаты с закрытым ключем действующие на текущую дату
+          `;
+  func FindCertificates( aFind :Variant[2] = [[CAPICOM_CERTIFICATE_FIND_EXTENDED_PROPERTY, CAPICOM_PROPID_KEY_PROV_INFO]-- оставляем только с закрытым ключем
+                                             ,[CAPICOM_CERTIFICATE_FIND_TIME_VALID, Now, True]-- оставляем только действующие на текущую дату
+                                             ];
+                         aCertificates: AutoObject = OpenStore.Certificates as AutoObject
+                       ) :AutoObject;
+    for var j = 1..LengthOfArray(aFind) do
+      aCertificates = aCertificates.Find(aFind[j,1], aFind[j,2], aFind[j,3]);
+    od;
+    Result = aCertificates;
+  end;
+
+
+  #Help ` aFilter – Storage с полями типа объекта - Сертификат:
+          В расчет по фильтру принимаются поля из aFilter с не пустыми значениями
+          Также aFilter может содержать поля для метода Certificates.Find
+            FIND_SHA1_HASH
+            FIND_SUBJECT_NAME
+            FIND_ISSUER_NAME
+            ...
+            FindValidOnly
+          поля FIND_SHA1_HASH и Thumbprint равнозначны и отрабатываются как FIND_SHA1_HASH
+          Также aFilter может содержать поля SubjectName :Storage и IssuerName :Storage
+            поля из SubjectName и IssuerName также используются для фильтрации
+
+          Пример aFilter:
+            {FIND_TIME_VALID: 10.01.2021 -- действующий на эту дату
+            ,FIND_EXTENDED_PROPERTY: 2 --CAPICOM_PROPID_KEY_PROV_INFO - т.е. отбираем только с закрытым ключем (иначе не подпишем)
+            ,FindValidOnly: true -- прошедший проверку по цепочке сертификатов
+            ,SubjectName: {ИНН: '1234567890'} -- условие на ИНН
+            }
+
+          `;
+  func ReadCertificates(aFilter :Storage = Storage.Create; aCertificates: AutoObject = OpenStore.Certificates as AutoObject) :List;
+    Result = List.Create;
+
+    func ParseToStorage(aVal :String) :Storage;
+      var vSubjects :String[];
+      SplitString(aVal, '=', vSubjects);
+      var vKey :String;
+      var vVal :String;
+      var vSubjectsStorage :Storage = Storage.Create;
+      for var z = 1..LengthOfArray(vSubjects) do
+        vVal = vSubjects[z+1];
+        if vSubjects[z+2] <> nil: -- т.е. vSubjects[z+1] = Value+", "+NextKey
+          vKey = ExtractWord(vVal, -1, ',');
+          vVal = SubStr(vVal, 1, Length(vVal) - Length(vKey) - 1);
+          vSubjects[z+1] = trim(vKey);
+        else -- vSubjects[z+1] = Value
+          vSubjects[z+1] = '';
+        fi;
+        if vSubjects[z] <> '':
+          vSubjectsStorage[vSubjects[z]] = vVal;
+        fi;
+      od;
+      Return vSubjectsStorage;
+    end;
+
+    func InFilter(aFilter :Storage; aValue :Storage) :Logical;
+      var vFieldName: String;
+      for var j = 1..aFilter.Count do
+        vFieldName = aFilter.IndexByNumber[j];
+        if vFieldName <> nil:
+          if aFilter[vFieldName] <> aValue[vFieldName]:
+            return false;
+          fi;
+        fi;
+      od;
+      Return true;
+    end;
+
+
+    var Certs :AutoObject[];
+    var vFindValidOnly :Logical = aFilter.FindValidOnly as Logical;
+
+    if aFilter.Thumbprint <> nil or aFilter.FIND_SHA1_HASH <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_SHA1_HASH, if(aFilter.Thumbprint<>nil, aFilter.Thumbprint as String, aFilter.FIND_SHA1_HASH as String), vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_SUBJECT_NAME <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_SUBJECT_NAME, aFilter.FIND_SUBJECT_NAME, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_ISSUER_NAME <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_ISSUER_NAME, aFilter.FIND_ISSUER_NAME, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_ROOT_NAME <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_ROOT_NAME, aFilter.FIND_ROOT_NAME, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_TEMPLATE_NAME <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_TEMPLATE_NAME, aFilter.FIND_TEMPLATE_NAME, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_EXTENSION <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_EXTENSION, aFilter.FIND_EXTENSION, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_EXTENDED_PROPERTY <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_EXTENDED_PROPERTY, aFilter.FIND_EXTENDED_PROPERTY, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_APPLICATION_POLICY <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_APPLICATION_POLICY, aFilter.FIND_APPLICATION_POLICY, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_CERTIFICATE_POLICY <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_CERTIFICATE_POLICY, aFilter.FIND_CERTIFICATE_POLICY, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_TIME_VALID <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_TIME_VALID, aFilter.FIND_TIME_VALID, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_TIME_NOT_YET_VALID <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_TIME_NOT_YET_VALID, aFilter.FIND_TIME_NOT_YET_VALID, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FIND_TIME_EXPIRED <> nil:
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_TIME_EXPIRED, aFilter.FIND_TIME_EXPIRED, vFindValidOnly]], aCertificates);
+    fi;
+    if aFilter.FieldExists('FIND_KEY_USAGE'):
+      aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_KEY_USAGE, aFilter.FIND_KEY_USAGE, vFindValidOnly]], aCertificates);
+    fi;
+    for var j = 1..aCertificates.Count do
+      Certs[j] = aCertificates.Item[j];
+    od;
+
+    var ByFilter :Logical = aFilter.SerialNumber <> nil
+                         or aFilter.SubjectName <> nil
+                         or aFilter.IssuerName <> nil
+                         or aFilter.ValidFromDate <> nil
+                         or aFilter.ValidToDate <> nil
+                         or aFilter.Version <> nil;
+
+    for var j = 1..LengthOfArray(Certs) do
+      var vCert :Storage = Storage.Create;
+      vCert.obj = Certs[j];
+      vCert.Version = Certs[j].Version;
+      vCert.SerialNumber = Certs[j].SerialNumber;
+      vCert.SubjectName = ParseToStorage(Certs[j].SubjectName as String);
+      vCert.IssuerName = ParseToStorage(Certs[j].IssuerName as String);
+      vCert.ValidFromDate = Certs[j].ValidFromDate;
+      vCert.ValidToDate = Certs[j].ValidToDate;
+      vCert.Thumbprint = Certs[j].Thumbprint;
+      var AddOk :Logical = true;
+      if ByFilter:
+        if AddOk and aFilter.SerialNumber <> nil and aFilter.SerialNumber <> vCert.SerialNumber:
+          AddOk = false;
+        fi;
+        if AddOk and aFilter.ValidFromDate <> nil and aFilter.ValidFromDate <> vCert.ValidFromDate:
+          AddOk = false;
+        fi;
+        if AddOk and aFilter.ValidToDate <> nil and aFilter.ValidToDate <> vCert.ValidToDate:
+          AddOk = false;
+        fi;
+        if AddOk and aFilter.Version <> nil and aFilter.Version <> vCert.Version:
+          AddOk = false;
+        fi;
+        if AddOk and aFilter.SubjectName <> nil and not InFilter(aFilter.SubjectName as Storage, vCert.SubjectName as Storage):
+          AddOk = false;
+        fi;
+        if AddOk and aFilter.IssuerName <> nil and not InFilter(aFilter.IssuerName as Storage, vCert.IssuerName as Storage):
+          AddOk = false;
+        fi;
+      fi;
+      if AddOk:
+        Result.Add(vCert);
       fi;
     od;
+
+
   end;
+
 
 end
