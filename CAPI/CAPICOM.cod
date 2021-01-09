@@ -38,7 +38,7 @@ const CAPICOM_INFO_SUBJECT_SIMPLE_NAME :Integer = 0;
 
 
 const CAPICOM_ENCODE_ANY :Integer= 0xffffffff;
-const CAPICOM_ENCODE_BASE64 :Integer= 0;
+const CAPICOM_ENCODE_BASE64 :Integer= 0;--default
 const CAPICOM_ENCODE_BINARY :Integer= 1;
 
 -- CAPICOM.Store >> .open param StoreLocation
@@ -73,7 +73,7 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   func LoadCert(aFileName :String; aPassword :String = nil; aKeyStorageFlag :Integer = CAPICOM_KEY_STORAGE_DEFAULT; aKeyLocation:Integer = CAPICOM_CURRENT_USER_KEY) :AutoObject;
     if ExistFile(aFileName):
       Result = AutoObject.Create('CAPICOM.Certificate.3');
-      Result.Load(aFileName, aPassword, aKeyStorageFlag, aKeyLocation);
+      Result.Load(aFileName, aPassword, aKeyStorageFlag, aKeyLocation); --Loads a signing certificate from a specified PFX file.
     fi;
   end;
 
@@ -135,6 +135,47 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     res = SD.Sign(CPSigner, detached, CAPICOM_ENCODE_BASE64) as String;
     tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
     tgt.Write(res);
+  end;
+
+  func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false; CAPICOM_ENCODE: Integer = CAPICOM_ENCODE_BASE64) :BinaryObject;
+    if CAPICOM_ENCODE = CAPICOM_ENCODE_BASE64:
+      Result = BinaryObject.Create;
+      Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE) as String;
+    else Result = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE) as BinaryObject;
+    fi;
+  end;
+
+  #Help ` На массив из данных получаем массив подписей
+          aSignedData - массив данных из имен файлов или BinaryObject или BinaryObject как Base64
+          aCertificate - AutoObject CAPICOM.Certificate или Thumbprint валидного сертификата из CAPICOM_CURRENT_USER_STORE/CAPICOM_MY_STORE
+          `;
+  func GetSigns(aSignedData: Variant[]; aCertificate: Variant; detached: Logical = false; CAPICOM_ENCODE: Integer = CAPICOM_ENCODE_BASE64) :BinaryObject[];
+    var SD :AutoObject = AutoObject.Create('CAPICOM.SignedData');
+    var vSigner :AutoObject = AutoObject.Create("CAPICOM.Signer");
+    if aCertificate is AutoObject:
+      vSigner.Certificate = aCertificate;
+    elsif aCertificate is String: -- это Thumbprint валидного сертификата из CAPICOM_CURRENT_USER_STORE/CAPICOM_MY_STORE
+      vSigner.Certificate = CertByThumbprint(aCertificate as String);
+    fi;
+    var srcBO: BinaryObject;
+    for var j = 1..LengthOfArray(aSignedData) do
+      if aSignedData[j] is BinaryObject:
+        srcBO = aSignedData[j] as BinaryObject;
+      elsif aSignedData[j] is String:
+        srcBO = BinaryObject.Create;
+        if ExistFile(aSignedData[j] as String):
+          srcBO.LoadFromFile(aSignedData[j] as String);
+        else -- Base64
+          srcBO.AsBase64 = aSignedData[j] as String;
+        fi;
+      else
+        srcBO = nil;
+      fi;
+      if srcBO <> nil:
+        SD.Content = srcBO;
+        Result[j] = GetSign(SD, vSigner, detached, CAPICOM_ENCODE);
+      fi;
+    od;
   end;
 
 
