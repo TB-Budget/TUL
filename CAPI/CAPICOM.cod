@@ -1,5 +1,5 @@
-﻿class "";
-inclass
+﻿class "CAPICOM";
+inclass public
 
 
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_DESCRIPTION = 2;
@@ -70,6 +70,11 @@ const CAPICOM_KEY_STORAGE_USER_PROTECTED :Integer = 2;--The key is user protecte
 const CAPICOM_CURRENT_USER_KEY :Integer = 0;--default  - The key is a user key.
 const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
 
+  func AsBytes(aSource :String; aEncoding :Variant = '1251') :BinaryObject;
+    Result = BinaryObject.Create;
+    Result.SetString(aSource, aEncoding);
+  end;
+
   func LoadCert(aFileName :String; aPassword :String = nil; aKeyStorageFlag :Integer = CAPICOM_KEY_STORAGE_DEFAULT; aKeyLocation:Integer = CAPICOM_CURRENT_USER_KEY) :AutoObject;
     if ExistFile(aFileName):
       Result = AutoObject.Create('CAPICOM.Certificate.3');
@@ -137,19 +142,16 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     tgt.Write(res);
   end;
 
-  func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false; CAPICOM_ENCODE: Integer = CAPICOM_ENCODE_BASE64) :BinaryObject;
-    if CAPICOM_ENCODE = CAPICOM_ENCODE_BASE64:
-      Result = BinaryObject.Create;
-      Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE) as String;
-    else Result = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE) as BinaryObject;
-    fi;
+  func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false) :BinaryObject;
+    Result = BinaryObject.Create;
+    Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE_BASE64) as String;
   end;
 
   #Help ` На массив из данных получаем массив подписей
           aSignedData - массив данных из имен файлов или BinaryObject или BinaryObject как Base64
           aCertificate - AutoObject CAPICOM.Certificate или Thumbprint валидного сертификата из CAPICOM_CURRENT_USER_STORE/CAPICOM_MY_STORE
           `;
-  func GetSigns(aSignedData: Variant[]; aCertificate: Variant; detached: Logical = false; CAPICOM_ENCODE: Integer = CAPICOM_ENCODE_BASE64) :BinaryObject[];
+  func GetSigns(aSignedData: Variant[]; aCertificate: Variant; detached: Logical = false) :BinaryObject[];
     var SD :AutoObject = AutoObject.Create('CAPICOM.SignedData');
     var vSigner :AutoObject = AutoObject.Create("CAPICOM.Signer");
     if aCertificate is AutoObject:
@@ -173,7 +175,7 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
       fi;
       if srcBO <> nil:
         SD.Content = srcBO;
-        Result[j] = GetSign(SD, vSigner, detached, CAPICOM_ENCODE);
+        Result[j] = GetSign(SD, vSigner, detached);
       fi;
     od;
   end;
