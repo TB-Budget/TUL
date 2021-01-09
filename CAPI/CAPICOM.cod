@@ -8,11 +8,11 @@ inclass public
 --  CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT = 0;
 --  CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY = 2;
 --  CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN = 1;
---  CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE = 1
---  CAPICOM_VERIFY_SIGNATURE_ONLY = 0;
 --  CERT_KEY_SPEC_PROP_ID = 6;
 
 
+const CAPICOM_VERIFY_SIGNATURE_ONLY :Integer = 0; --Only the signature is checked.
+const CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE :Integer = 1; --default Both the signature and the validity of the certificate used to create the signature are checked.
 
 const CAPICOM_PROPID_KEY_PROV_INFO :Integer = 2;
 
@@ -148,26 +148,69 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   end;
 
   proc SignFileToFile(FilePath:String; cert: AutoObject; detached: Logical);
-    var src, tgt: TextFile;
-    var srcBO: BinaryObject;
-    var SD, CPSigner: AutoObject;
-    var res:String;
-    SD = AutoObject.Create('CAPICOM.SignedData');
-    CPSigner = AutoObject.Create("CAPICOM.Signer");
-    CPSigner.Certificate = cert;
-    srcBO = BinaryObject.Create;
-    src = TextFile.Create(FilePath, System.fmOpenRead, TextFile.Binary);
-    srcBO.AsString  = src.Read(src.Size);
-    SD.Content = srcBO;
-    res = SD.Sign(CPSigner, detached, CAPICOM_ENCODE_BASE64) as String;
-    tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
-    tgt.Write(res);
+    GetSigns([FilePath], cert, detached)[1].SaveToFile(FilePath+".sig");
+--    var src, tgt: TextFile;
+--    var srcBO: BinaryObject;
+--    var SD, CPSigner: AutoObject;
+--    var res:String;
+--    SD = AutoObject.Create('CAPICOM.SignedData');
+--    CPSigner = AutoObject.Create("CAPICOM.Signer");
+--    CPSigner.Certificate = cert;
+--    srcBO = BinaryObject.Create;
+--    src = TextFile.Create(FilePath, System.fmOpenRead, TextFile.Binary);
+--    srcBO.AsString  = src.Read(src.Size);
+--    SD.Content = srcBO;
+--    res = SD.Sign(CPSigner, detached, CAPICOM_ENCODE_BASE64) as String;
+--    tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
+--    tgt.Write(res);
   end;
 
   func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false) :BinaryObject;
     Result = BinaryObject.Create;
     Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE_BASE64) as String;
   end;
+
+  #Help ` В случае ошибки вернет Storage с описанием
+          если проверка пройдена без ошибок - вернет nil
+          `;
+  func VerifySign(aSignedData: AutoObject; aSign: BinaryObject; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage;
+    try
+      aSignedData.Verify(aSign, detached, VerifyFlag);
+    except
+      Result = Storage.Create;
+      Result.ErrorCode = ErrorCode;
+      Result.ErrorText = ErrorText;
+    end;
+  end;
+
+  func _GetBinaryObject(aSource: Variant) :BinaryObject;
+    var res: BinaryObject;
+    if aSource is BinaryObject:
+      res = aSource as BinaryObject;
+    elsif aSource is String:
+      res = BinaryObject.Create;
+      if ExistFile(aSource as String):
+        res.LoadFromFile(aSource as String);
+      else -- Base64
+        res.AsBase64 = aSource as String;
+      fi;
+    fi;
+    Return res;
+  end;
+
+
+  func VerifySigns(aSignedData: Variant[]; aSigns: Variant[]; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage[];
+    var SD :AutoObject = AutoObject.Create('CAPICOM.SignedData');
+    for var j = 1..LengthOfArray(aSigns) do
+      SD.Content = _GetBinaryObject(aSignedData[j]);
+      Result[j] = VerifySign(SD, _GetBinaryObject(aSigns[j]), detached, VerifyFlag);
+    od;
+  end;
+
+
+--const CAPICOM_VERIFY_SIGNATURE_ONLY :Integer = 0; --Only the signature is checked.
+--const CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE :Integer = 1; --default Both the signature and the validity of the certificate used to create the signature are checked.
+
 
   #Help ` На массив из данных получаем массив подписей
           aSignedData - массив данных из имен файлов или BinaryObject или BinaryObject как Base64
@@ -183,18 +226,7 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     fi;
     var srcBO: BinaryObject;
     for var j = 1..LengthOfArray(aSignedData) do
-      if aSignedData[j] is BinaryObject:
-        srcBO = aSignedData[j] as BinaryObject;
-      elsif aSignedData[j] is String:
-        srcBO = BinaryObject.Create;
-        if ExistFile(aSignedData[j] as String):
-          srcBO.LoadFromFile(aSignedData[j] as String);
-        else -- Base64
-          srcBO.AsBase64 = aSignedData[j] as String;
-        fi;
-      else
-        srcBO = nil;
-      fi;
+      srcBO = _GetBinaryObject(aSignedData[j]);
       if srcBO <> nil:
         SD.Content = srcBO;
         Result[j] = GetSign(SD, vSigner, detached);
