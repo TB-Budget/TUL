@@ -261,6 +261,42 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   end;
 
 
+-- примерное содержимое элемента результата ReadCertificates (поля могут участвовать в фильтре)
+--{        "obj": "{AutoObject}" -- CAPICOM - сертификат
+--,        "Version": 3
+--,        "SerialNumber": "72DD8A0035ACA0B7455357160A071A3E"
+--,        "ValidFromDate": "13.09.2020 11:15:36"  --ДействителенС
+--,        "ValidToDate": "13.12.2021 11:25:24"    --ДействителенПо
+--,        "Thumbprint": "A79DF1B161D8DDDFD4527BCC60E3C182B63564A0"  -- отпечаток
+--,        "SubjectName":
+--           {          "CN": "Тестовая организация №2879385" --Организация
+--           ,          "SN": "Самсоненко" -- фамилия
+--           ,          "G": "Максим Александрович" -- имя отчество
+--           ,          "C": "RU" -- страна
+--           ,          "S": "55 Омская область" --регион
+--           ,          "L": "Омск" -- город
+--           ,          "STREET": "\"644024, ул. Маршала Жукова, 77\"" -- адрес
+--           ,          "O": "Тестовая организация №2879385" -- Организация название
+--           ,          "ОГРН": "1107000000000"
+--           ,          "СНИЛС": "76011001140"
+--           ,          "ИНН": "009628793855"
+--           ,          "OID.1.2.840.113549.1.9.2": "9628793855-962801000-076011001140"
+--           }
+--,        "IssuerName":
+--            {          "CN": "\"АО \"\"ПФ \"\"СКБ Контур\"\" (Test)\""
+--            ,          "O" : "\"АО \"\"ПФ \"\"СКБ Контур\"\"\""
+--            ,          "OU": "Удостоверяющий центр"
+--            ,          "STREET": "\"Пр. Космонавтов, д. 56\""
+--            ,          "L": "Екатеринбург"
+--            ,          "S": "66 Свердловская область"
+--            ,          "C": "RU"
+--            ,          "ИНН": "000000000000"
+--            ,          "ОГРН": "0000000000000"
+--            ,          "E": "ca@skbkontur.ru"
+--            }
+--}
+
+
   #Help ` aFilter – Storage с полями типа объекта - Сертификат:
           В расчет по фильтру принимаются поля из aFilter с не пустыми значениями
           Также aFilter может содержать поля для метода Certificates.Find
@@ -295,6 +331,10 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
         if vSubjects[z+2] <> nil: -- т.е. vSubjects[z+1] = Value+", "+NextKey
           vKey = ExtractWord(vVal, -1, ',');
           vVal = SubStr(vVal, 1, Length(vVal) - Length(vKey) - 1);
+          vVal = ReplaceStrings(vVal, [ '\\', '\/', '\"', '\b', '\t', '\n', '\f', '\r' ], [ '\', '/', '"', chr(8), chr(9), chr(10), chr(12), chr(13) ], true);
+          if UnmaskChar(vVal,'"') <> nil:
+            vVal = UnmaskChar(vVal,'"');
+          fi;
           vSubjects[z+1] = trim(vKey);
         else -- vSubjects[z+1] = Value
           vSubjects[z+1] = '';
