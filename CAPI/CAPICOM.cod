@@ -147,24 +147,6 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     fi;
   end;
 
-  proc SignFileToFile(FilePath:String; cert: AutoObject; detached: Logical);
-    GetSigns([FilePath], cert, detached)[1].SaveToFile(FilePath+".sig");
---    var src, tgt: TextFile;
---    var srcBO: BinaryObject;
---    var SD, CPSigner: AutoObject;
---    var res:String;
---    SD = AutoObject.Create('CAPICOM.SignedData');
---    CPSigner = AutoObject.Create("CAPICOM.Signer");
---    CPSigner.Certificate = cert;
---    srcBO = BinaryObject.Create;
---    src = TextFile.Create(FilePath, System.fmOpenRead, TextFile.Binary);
---    srcBO.AsString  = src.Read(src.Size);
---    SD.Content = srcBO;
---    res = SD.Sign(CPSigner, detached, CAPICOM_ENCODE_BASE64) as String;
---    tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
---    tgt.Write(res);
-  end;
-
   func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false) :BinaryObject;
     Result = BinaryObject.Create;
     Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE_BASE64) as String;
@@ -176,6 +158,69 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   func VerifySign(aSignedData: AutoObject; aSign: BinaryObject; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage;
     try
       aSignedData.Verify(aSign, detached, VerifyFlag);
+    except
+      Result = Storage.Create;
+      Result.ErrorCode = ErrorCode;
+      Result.ErrorText = ErrorText;
+    end;
+  end;
+
+  #Help ` В случае ошибки вернет Storage с описанием
+          если проверка пройдена без ошибок - вернет BinaryObject
+          `;
+  func VerifySignAndExtract(aSign: BinaryObject; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Variant;
+    var SignedData :AutoObject = AutoObject.Create('CAPICOM.SignedData');
+    var WSH = AutoObject.Create("MSScriptControl.ScriptControl");
+    var resO: BinaryObject;
+    try
+      SignedData.Verify(aSign, False, VerifyFlag);
+      WSH.Language="vbscript";
+      WSH.AddCode(`
+      Function Base64Encode(SignedData)
+        Dim oXML, oNode
+        Set oXML = CreateObject("Msxml2.DOMDocument.3.0")
+        Set oNode = oXML.CreateElement("base64")
+        oNode.dataType = "bin.base64"
+        oNode.nodeTypedValue = Stream_StringToBinary(SignedData.Content)
+        Base64Encode = oNode.text
+        Set oNode = Nothing
+        Set oXML = Nothing
+      End Function
+
+      Function Stream_StringToBinary(Text)
+        Const adTypeText = 2
+        Const adTypeBinary = 1
+
+        'Create Stream object
+        Dim BinaryStream
+        Set BinaryStream = CreateObject("ADODB.Stream")
+
+        'Specify stream type - we want To save text/string data.
+        BinaryStream.Type = adTypeText
+
+        'Specify charset For the source text (unicode) data.
+        BinaryStream.CharSet = "utf-16le"
+
+        'Open the stream And write text/string data To the object
+        BinaryStream.Open
+        BinaryStream.WriteText Text
+
+        'Change stream type To binary
+        BinaryStream.Position = 0
+        BinaryStream.Type = adTypeBinary
+
+        'Ignore first two bytes - sign of
+        BinaryStream.Position = 2
+
+        'Open the stream And get binary data from the object
+        Stream_StringToBinary = BinaryStream.Read
+
+        Set BinaryStream = Nothing
+      End Function
+      `);
+      reso = BinaryObject.Create;
+      reso.AsBase64 = WSH.Run('Base64Encode', SignedData);
+      Result = reso;
     except
       Result = Storage.Create;
       Result.ErrorCode = ErrorCode;
@@ -202,11 +247,18 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   func VerifySigns(aSignedData: Variant[]; aSigns: Variant[]; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage[];
     var SD :AutoObject = AutoObject.Create('CAPICOM.SignedData');
     for var j = 1..LengthOfArray(aSigns) do
-      SD.Content = _GetBinaryObject(aSignedData[j]);
+      if detached then
+        SD.Content = _GetBinaryObject(aSignedData[j]);
+      fi;
       Result[j] = VerifySign(SD, _GetBinaryObject(aSigns[j]), detached, VerifyFlag);
     od;
   end;
 
+  func VerifySignsAndExreact(aSigns: Variant[]; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Variant[];
+    for var j = 1..LengthOfArray(aSigns) do
+      Result[j] = VerifySignAndExtract(_GetBinaryObject(aSigns[j]), VerifyFlag);
+    od;
+  end;
 
 --const CAPICOM_VERIFY_SIGNATURE_ONLY :Integer = 0; --Only the signature is checked.
 --const CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE :Integer = 1; --default Both the signature and the validity of the certificate used to create the signature are checked.
@@ -234,6 +286,33 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     od;
   end;
 
+
+  proc SignFileToFile(FilePath:String;  aCertificate: Variant; detached: Logical; asBase64 :Logical=False);
+    var tgt: TextFile;
+    var srcBO, tgtBO: BinaryObject;
+    srcBO = BinaryObject.Create;
+    srcBO.LoadFromFile(FilePath);
+    tgtBO = GetSigns([srcBO], aCertificate, detached)[1];
+    if asBase64 then
+      tgt = TextFile.Create(FilePath+".sig", System.fmCreate, TextFile.Binary);
+      tgt.Write(tgtBO.AsBase64);
+    else
+      tgtBO.SaveToFile(FilePath+".sig");
+    fi;
+  end;
+
+  proc VerifyAndExtractFile(FilePath:String; tgtFilePath:String='');
+    var srcBO: BinaryObject;
+    var resBO: BinaryObject;
+    srcBO = BinaryObject.Create;
+    srcBO.LoadFromFile(FilePath);
+    if tgtFilePath = '' then
+      var p = CharPos('.', FilePath, -1);
+      tgtFilePath = Substr(FilePath,1, p-1);
+    fi;
+    resBO = VerifySignsAndExreact([srcBO])[1];
+    resBO.SaveToFile(tgtFilePath);
+  end;
 
   func  CertByThumbprint(aThumbprint: String; aCertificates: AutoObject = OpenStore.Certificates as AutoObject; aFindValidOnly: Logical = false):AutoObject;
     aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_SHA1_HASH, aThumbprint, aFindValidOnly]], aCertificates);
