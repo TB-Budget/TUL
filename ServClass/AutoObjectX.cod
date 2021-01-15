@@ -5,6 +5,14 @@
 class "Базовая обертка над AutoObject";
 inclass public
 
+var x64 :Logical := ProcessInfo.x64;
+var ExistMSScriptControl :Logical := CheckMSScriptControl;
+func CheckMSScriptControl :Logical;
+  try
+    Result = AutoObject.Create("MSScriptControl.ScriptControl") <> nil;
+  except
+  end;
+end;
 #Help `Параметр для AutoObject.Create(_OleClass)
        Обязательно перекрывается в наследнике`;
 var _OleClass :String;
@@ -93,6 +101,8 @@ end;
 --{ Реализация поддержки динамических полей и свойств
     inclass private
     func GetSelfRttiNames :Storage;
+      Result = Storage.Create;
+      Result.PropertiesNames = Storage.Create;
     end;
 
     SelfRttiNames :Storage := GetSelfRttiNames;
@@ -150,7 +160,7 @@ inobject public
 #Help `Вызывается в OnDestroy (перекрывается в наследниках)
        Нужен для "правильной" зачистки всех AutoObject`;
   proc _Clear;
-    if _MSScriptControl <> nil:
+    if not x64 and _MSScriptControl <> nil:
       _MSScriptControl.Reset;
     fi;
   end;
@@ -317,7 +327,9 @@ inobject private
 #else
   proc _SetItem(aValue :Variant; FieldName :String; Param :Variant[] = nil);
 #end
-    _MSScriptControl_SetComField(FieldName, aValue);
+    if ExistMSScriptControl:
+      _MSScriptControl_SetComField(FieldName, aValue);
+    fi;
   end;
 ---------------- блок поддержки для _SetItems --------------
 
@@ -325,8 +337,10 @@ inobject private
          Метод для определения принадлежности свойства к _AutoObject
          Result = false - означает что свойство с именем aPropName относится к _AutoObject`;
   func _isSelfProp(aPropName :String) :Logical;
-    Result = (SelfRttiNames.PropertiesNames as Storage).FieldExists(aPropName); #Warning 'Казунин: Пока не работает! Доделать! Обязательно искать в своем классе через RTTI!';
     Result = aPropName[1] = '_'; -- это свои поля, пока не доделана реализация через SelfRttiNames
+    if not Result:
+      Result = (SelfRttiNames.PropertiesNames as Storage).FieldExists(aPropName); #Warning 'Казунин: Пока не работает! Доделать! Обязательно искать в своем классе через RTTI!';
+    fi;
   end;
 
 
@@ -336,6 +350,9 @@ inobject private
   var _MSScriptControl :AutoObject := _MSScriptControl_ini;
 
   func _MSScriptControl_ini :AutoObject;
+    if not ExistMSScriptControl:
+      return;
+    fi;
     Result = AutoObject.Create("MSScriptControl.ScriptControl");
     try
       Result.Language="vbscript";
@@ -374,7 +391,9 @@ inobject private
 
   #Help `Костыльный метод записи в свойство _AutoObject нового значения, используя имя свойства`;
   Proc _MSScriptControl_SetComField(aProp :String; aValue :Variant);
-    _MSScriptControl.Run('SetComField', aProp, aValue);
+    if ExistMSScriptControl:
+      _MSScriptControl.Run('SetComField', aProp, aValue);
+    fi;
   end;
 
 
