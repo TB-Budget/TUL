@@ -5,9 +5,10 @@ var x64: Logical := ProcessInfo.x64;
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_DESCRIPTION = 2;
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_NAME = 1;
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME = 0;
---  CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT = 0;
---  CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY = 2;
---  CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN = 1;
+const CAPICOM_CERTIFICATE_INCLUDE_CHAIN_EXCEPT_ROOT :Integer = 0;
+const CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY :Integer = 2;
+const CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN :Integer = 1;
+const CADES_BES :Integer = 1;
 --  CERT_KEY_SPEC_PROP_ID = 6;
 
 
@@ -104,15 +105,15 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
       else
         Result = AutoObject.Create('CAPICOM.Certificate.3');
       fi;
-      Result.Load(aFileName, aPassword, aKeyStorageFlag, aKeyLocation); --Loads a signing certificate from a specified PFX file.
+      Result.Load(ConstV(aFileName), ConstV(aPassword), ConstV(aKeyStorageFlag), ConstV(aKeyLocation)); --Loads a signing certificate from a specified PFX file.
     fi;
   end;
 
   func OpenStore(aStoreLocation :Variant = nil; aStoreName :Variant = nil; aOpenMode :Variant = nil) :AutoObject;
     if x64:
-      Result = AutoObject.Create('CAdESCOM.Store.1');
+      Result = AutoObject.Create('CAdESCOM.Store');
     else
-      Result = AutoObject.Create('CAPICOM.Store.3');
+      Result = AutoObject.Create('CAPICOM.Store');
     fi;
     Result.Open
      (if(aStoreLocation is Integer, aStoreLocation as Integer, CAPICOM_CURRENT_USER_STORE)
@@ -131,7 +132,7 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     elsif aCert is String:
       var vCertS :String = aCert as String;
       if ExistFile(vCertS):
-        vCert = LoadCert(vCertS);
+        vCert = LoadCert(vCertS+'');
       else
         if x64:
           vCert = AutoObject.Create('CAdESCOM.Certificate.1');
@@ -141,7 +142,7 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
         vCert.Import(vCertS);
       fi;
     elsif aCert is Storage: -- это файл с доп.параметрами для Load
-      vCert = LoadCert(aCert.FileName  as String, aCert.Password as String, aCert.KeyStorageFlag as Integer, aCert.KeyLocation as Integer);
+      vCert = LoadCert(aCert.FileName as String, aCert.Password as String, aCert.KeyStorageFlag as Integer, aCert.KeyLocation as Integer);
     fi;
     if vCert <> nil:
       -- анализ Store
@@ -162,7 +163,6 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false) :BinaryObject;
     Result = BinaryObject.Create;
     if x64:
-      var CADES_BES: Integer = 1;
       Result.AsBase64 = aSignedData.SignCades(aSigner, CADES_BES, detached, CAPICOM_ENCODE_BASE64) as String;
     else
       Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE_BASE64) as String;
@@ -176,11 +176,8 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   func VerifySign(aSignedData: AutoObject; aSign: BinaryObject; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage;
     try
       if x64:
-        var CADES_BES: Integer = 1;
-        --aSignedData.Verify(aSign, CADES_BES, detached);
---proc Verify     (SignedMessage :OleStr,                                                opt hasdefault bDetached :Boolean  , opt hasdefault VerifyFlag :CAPICOM_SIGNED_DATA_VERIFY_FLAG)
---proc VerifyCades(SignedMessage :OleStr, opt hasdefault CadesType :CADESCOM_CADES_TYPE, opt hasdefault bDetached :Boolean)
-        aSignedData.Verify(aSign, detached, VerifyFlag);
+        aSignedData.VerifyCades(aSign, CADES_BES, detached);
+        -- нужна дополнительная ролверка по VerifyFlag ,т.к. в VerifyCades этот параметр не проверяется (а может и наоборот - всегда проверяется)
 
       else
         aSignedData.Verify(aSign, detached, VerifyFlag);
@@ -306,6 +303,8 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
     if x64:
       SD = AutoObject.Create('CAdESCOM.CadesSignedData');
       vSigner = AutoObject.Create("CAdESCOM.CPSigner");
+      --vSigner.TSAAddress = "http://tsp.taxcom.ru/tsp/tsp.srf"; -- TSAAddress нужно передавать как параметр
+      --vSigner.Options = CAPICOM_CERTIFICATE_INCLUDE_END_ENTITY_ONLY;
     else
       SD = AutoObject.Create('CAPICOM.SignedData');
       vSigner = AutoObject.Create("CAPICOM.Signer");
@@ -355,20 +354,10 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
   end;
 
   func  CertByThumbprint(aThumbprint: String; aCertificates: AutoObject = OpenStore.Certificates as AutoObject; aFindValidOnly: Logical = false):AutoObject;
-    if x64:
-      for var j = 1..aCertificates.Count do
-        Result = aCertificates.Item[j] as AutoObject;
-        if Result.Thumbprint  = aThumbprint:
-          Return;
-        fi;
-      od;
-      Result = nil;
-    else
       aCertificates = FindCertificates([[CAPICOM_CERTIFICATE_FIND_SHA1_HASH, aThumbprint, aFindValidOnly]], aCertificates);
       if aCertificates.Count = 1:
         Result = aCertificates.Item[1];
       fi;
-    fi;
   end;
 
 
@@ -384,13 +373,13 @@ const CAPICOM_LOCAL_MACHINE_KEY :Integer = 1;--The key is a machine key.
                          aCertificates: AutoObject = OpenStore.Certificates as AutoObject
                        ) :AutoObject;
     for var j = 1..LengthOfArray(aFind) do
---      var res :Variant = aCertificates.Find(aFind[j,1], aFind[j,2], aFind[j,3]);
---      aCertificates = res;
-      aCertificates = aCertificates.Find(aFind[j,1], aFind[j,2], aFind[j,3]);
+        aCertificates = aCertificates.Find(aFind[j,1], aFind[j,2] as variant, aFind[j,3]);
     od;
     Result = aCertificates;
   end;
-
+  func ConstV (v :Variant) :Variant;
+    Return v;
+  end;
 -- примерное содержимое элемента результата ReadCertificates (поля могут участвовать в фильтре)
 --{        "obj": "{AutoObject}" -- CAPICOM - сертификат
 --,        "Version": 3
