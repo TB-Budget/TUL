@@ -78,8 +78,10 @@ const CADES_BES :Integer = 1;
 --  CERT_KEY_SPEC_PROP_ID = 6;
 
 func GetCPLicense(aProduct :Integer = CADESCOM_PRODUCT_CSP) :Storage;-- !!! возвращает не актуальные данные
-  Result = Storage.Create;
   try
+    if AutoObject.Create('CAdESCOM.Certificate') <> nil:
+      Result = Storage.Create;
+    fi;
     var CPLic :AutoObject = AutoObject.Create('CAdESCOM.CPLicense'); -- OleClassName = 'ICPLicense'
     Result.LastGet = now;
     Result.SerialNumber = CPLic.SerialNumber(aProduct);
@@ -87,7 +89,7 @@ func GetCPLicense(aProduct :Integer = CADESCOM_PRODUCT_CSP) :Storage;-- !!! во
     Result.FirstInstallDate = StringToDate(CPLic.FirstInstallDate(aProduct) as String);
     Result.Type = CPLic.Type(aProduct);
     Result.CompanyName = CPLic.CompanyName(aProduct);
-    FindClass('Console')?.trace(Result.AsString);
+    --FindClass('Console')?.trace(Result.AsString);
   except
   end;
 end;
