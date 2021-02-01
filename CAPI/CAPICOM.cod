@@ -228,7 +228,7 @@ end;
         aSignedData.Verify(aSign, detached, VerifyFlag);
       else -- иначе - CadesCom (OleClassName in ['ICPSignedData*', IAdditionalStore])
         aSignedData.VerifyCades(aSign, CADES_BES, detached);
-        -- нужна дополнительная ролверка по VerifyFlag ,т.к. в VerifyCades этот параметр не проверяется (а может и наоборот - всегда проверяется)
+        -- нужна дополнительная проверка по VerifyFlag ,т.к. в VerifyCades этот параметр не проверяется (а может и наоборот - всегда проверяется)
       fi;
     except
       Result = Storage.Create;
@@ -300,11 +300,14 @@ end;
     end;
   end;
 
+  #Help `Если aSource - имя существующего файла, то вернет его как BinaryObject
+         если aSource - BinaryObject то вернет BinaryObject
+         если aSource - строка то вернет BinaryObject от aSource как Base64`;
   func _GetBinaryObject(aSource: Variant) :BinaryObject;
     var res: BinaryObject;
     if aSource is BinaryObject:
       res = aSource as BinaryObject;
-    elsif aSource is String:
+    elsif aSource is String and aSource as String <> '':
       res = BinaryObject.Create;
       if ExistFile(aSource as String):
         res.LoadFromFile(aSource as String);
@@ -345,7 +348,7 @@ end;
           aSignedData - массив данных из имен файлов или BinaryObject или BinaryObject как Base64
           aCertificate - AutoObject CAPICOM.Certificate или Thumbprint валидного сертификата из CAPICOM_CURRENT_USER_STORE/CAPICOM_MY_STORE
           `;
-  func GetSigns(aSignedData: Variant[]; aCertificate: Variant; detached: Logical = false) :BinaryObject[];
+  func GetSigns(aSignedData: Variant[]; aCertificate: Variant; detached: Logical = false; SignNil :Logical = false) :BinaryObject[];
     var SD :AutoObject;
     var vSigner :AutoObject;
     -- !!! Надо уметь работать
@@ -367,6 +370,9 @@ end;
     var srcBO: BinaryObject;
     for var j = 1..LengthOfArray(aSignedData) do
       srcBO = _GetBinaryObject(aSignedData[j]);
+      if SignNil and srcBO = nil:
+        srcBO = BinaryObject.Create;
+      fi;
       if srcBO <> nil:
         SD.Content = srcBO;
         Result[j] = GetSign(SD, vSigner, detached);
@@ -374,6 +380,37 @@ end;
     od;
   end;
 
+
+  -- если подпись получилась пустая(отсутствуют данные для подписи), то в файл подпись не сохраняется
+  proc SignFilesToFiles(aFiles :String[]; aCertificate: AutoObject; aFilesSgn :String[] = nil; detached: Logical = true; asBase64 :Logical=False; BlockSizeDetached :integer = 99);
+    var FileSgn :String;
+    var vPart :String[];
+    var vPart_i ,vPart_j :Integer;
+    var vSigns :BinaryObject[];
+    var vBlock :integer = if(detached, BlockSizeDetached, 1);
+    var vFilesSgn :String[] = if(aFilesSgn = nil,[] as String[], aFilesSgn);
+    for var j = 1..LengthOfArray(aFiles) do
+      vPart_i = vPart_i + 1;
+      vPart[vPart_i] = aFiles[j];
+      if vPart_i > vBlock or j = LengthOfArray(aFiles):
+        vPart_i = 0;
+        vSigns = GetSigns(vPart, aCertificate, detached);
+        for var z = 1..LengthOfArray(vPart) do
+          FileSgn = vFilesSgn[vPart_j+z];
+          if FileSgn = nil:
+            FileSgn = vPart[z]+'.sgn';
+          fi;
+          if asBase64:
+            TextFile.Create(FileSgn, System.fmCreate, TextFile.Binary).Write(vSigns[z].AsBase64);
+          else
+            vSigns[z].SaveToFile(FileSgn);
+          fi;
+        od;
+        vPart = nil;
+        vPart_j = j;
+      fi;
+    od;
+  end;
 
   proc SignFileToFile(FilePath:String;  aCertificate: Variant; detached: Logical; asBase64 :Logical=False);
     var tgt: TextFile;
