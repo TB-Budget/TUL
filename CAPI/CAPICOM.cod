@@ -382,7 +382,13 @@ end;
 
 
   -- если подпись получилась пустая(отсутствуют данные для подписи), то в файл подпись не сохраняется
-  proc SignFilesToFiles(aFiles :String[]; aCertificate: AutoObject; aFilesSgn :String[] = nil; detached: Logical = true; asBase64 :Logical=False; BlockSizeDetached :integer = 99);
+  proc SignFilesToFiles(aFiles :String[];
+                        aCertificate: AutoObject;
+                        aFilesSgn :String[] = nil;
+                        detached: Logical = true;
+                        asBase64 :Logical=False;
+                        OnBreak :func :Logical = func :Logical end; -- сдесь может быть замыкание для выполнения досрочного выхода
+                        BlockSizeDetached :integer = 99);
     var FileSgn :String;
     var vPart :String[];
     var vPart_i ,vPart_j :Integer;
@@ -390,6 +396,9 @@ end;
     var vBlock :integer = if(detached, BlockSizeDetached, 1);
     var vFilesSgn :String[] = if(aFilesSgn = nil,[] as String[], aFilesSgn);
     for var j = 1..LengthOfArray(aFiles) do
+      if OnBreak():
+        break;
+      fi;
       vPart_i = vPart_i + 1;
       vPart[vPart_i] = aFiles[j];
       if vPart_i > vBlock or j = LengthOfArray(aFiles):
