@@ -211,11 +211,15 @@ end;
 
   func GetSign(aSignedData: AutoObject; aSigner: AutoObject; detached: Logical = false) :BinaryObject;
     Result = BinaryObject.Create;
+    try
     if aSignedData.OleClassName = 'ISignedData': -- это CapiCom
       Result.AsBase64 = aSignedData.Sign(aSigner, detached, CAPICOM_ENCODE_BASE64) as String;
     else
       Result.AsBase64 = aSignedData.SignCades(aSigner, CADES_BES, detached, CAPICOM_ENCODE_BASE64) as String;
     fi;
+    except
+      SetError(0,'TUL.CAPICOM.GetSign OleClassName='+aSignedData.OleClassName+'>>> '+ ErrorText);
+    end;
   end;
 
 
