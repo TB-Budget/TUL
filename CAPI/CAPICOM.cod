@@ -236,8 +236,9 @@ end;
       fi;
     except
       Result = Storage.Create;
-      Result.ErrorCode = ErrorCode;
-      Result.ErrorText = ErrorText;
+      Result.Error = Storage.Create;
+      Result.Error.ErrorCode = ErrorCode;
+      Result.Error.ErrorText = ErrorText;
     end;
   end;
 
@@ -322,10 +323,10 @@ end;
     Return res;
   end;
 
-
   func VerifySigns(aSignedData: Variant[]; aSigns: Variant[]; detached: Logical = false; VerifyFlag :Integer = CAPICOM_VERIFY_SIGNATURE_AND_CERTIFICATE) :Storage[];
     var SD :AutoObject;
-    if x64 or CPInstalled:
+    var ByCAdESCOM :Logical = x64 or CPInstalled;
+    if ByCAdESCOM:
       SD = AutoObject.Create('CAdESCOM.CadesSignedData');
     else
       SD = AutoObject.Create('CAPICOM.SignedData');
@@ -335,6 +336,36 @@ end;
         SD.Content = _GetBinaryObject(aSignedData[j]);
       fi;
       Result[j] = VerifySign(SD, _GetBinaryObject(aSigns[j]), detached, VerifyFlag);
+      if Result[j] = nil or Result[j].Error = nil: -- проверка пройдена
+        if Result[j] = nil:
+          Result[j] = Storage.Create;
+        fi;
+        var SignInfo :Storage = Result[j];
+        SignInfo.Signers = List.Create;
+        for var k = 1..SD.Signers.Count do
+          var vSign :AutoObject = SD.Signers.Item[k] as AutoObject;
+          var vSignStore :Storage = Storage.Create;
+          vSignStore.Certificate = CertificateAsStorage(vSign.Certificate);
+          var vAuthAttrStore :Storage = Storage.Create;
+          for var z = 1..vSign.AuthenticatedAttributes.Count do
+            var Attr :AutoObject = vSign.AuthenticatedAttributes.item[z];
+            vAuthAttrStore[Attr.Name] = Attr.Value;
+          od;
+          vSignStore.AuthenticatedAttributes = vAuthAttrStore;
+          if ByCAdESCOM: --https://docs.cryptopro.ru/cades/reference/cadescom/cadescom_interface/icpsigner3
+            try
+              vSignStore.SignatureTimeStampTime = vSign.SignatureTimeStampTime;
+            except
+            end;
+            try
+              vSignStore.SigningTime = vSign.SigningTime;
+            except
+            end;
+            vSignStore.SignatureStatus = vSign.SignatureStatus;
+          fi;
+          SignInfo.Signers.Add(vSignStore);
+        od;
+      fi;
     od;
   end;
 
@@ -538,31 +569,6 @@ end;
   func ReadCertificates(aFilter :Storage = Storage.Create; aCertificates: AutoObject = OpenStore.Certificates as AutoObject) :List;
     Result = List.Create;
 
-    func ParseToStorage(aVal :String) :Storage;
-      var vSubjects :String[];
-      SplitString(aVal, '=', vSubjects);
-      var vKey :String;
-      var vVal :String;
-      var vSubjectsStorage :Storage = Storage.Create;
-      for var z = 1..LengthOfArray(vSubjects) do
-        vVal = vSubjects[z+1];
-        if vSubjects[z+2] <> nil: -- т.е. vSubjects[z+1] = Value+", "+NextKey
-          vKey = ExtractWord(vVal, -1, ',');
-          vVal = SubStr(vVal, 1, Length(vVal) - Length(vKey) - 1);
-          vVal = ReplaceStrings(vVal, [ '\\', '\/', '\"', '\b', '\t', '\n', '\f', '\r' ], [ '\', '/', '"', chr(8), chr(9), chr(10), chr(12), chr(13) ], true);
-          if UnmaskChar(vVal,'"') <> nil:
-            vVal = UnmaskChar(vVal,'"');
-          fi;
-          vSubjects[z+1] = trim(vKey);
-        else -- vSubjects[z+1] = Value
-          vSubjects[z+1] = '';
-        fi;
-        if vSubjects[z] <> '':
-          vSubjectsStorage[vSubjects[z]] = vVal;
-        fi;
-      od;
-      Return vSubjectsStorage;
-    end;
 
     func InFilter(aFilter :Storage; aValue :Storage) :Logical;
       var vFieldName: String;
@@ -632,15 +638,7 @@ end;
                          or aFilter.Version <> nil;
 
     for var j = 1..LengthOfArray(Certs) do
-      var vCert :Storage = Storage.Create;
-      vCert.obj = Certs[j];
-      vCert.Version = Certs[j].Version;
-      vCert.SerialNumber = Certs[j].SerialNumber;
-      vCert.SubjectName = ParseToStorage(Certs[j].SubjectName as String);
-      vCert.IssuerName = ParseToStorage(Certs[j].IssuerName as String);
-      vCert.ValidFromDate = Certs[j].ValidFromDate;
-      vCert.ValidToDate = Certs[j].ValidToDate;
-      vCert.Thumbprint = Certs[j].Thumbprint;
+      var vCert :Storage = CertificateAsStorage(Certs[j]);
       var AddOk :Logical = true;
       if ByFilter:
         if AddOk and aFilter.SerialNumber <> nil and aFilter.SerialNumber <> vCert.SerialNumber:
@@ -666,9 +664,43 @@ end;
         Result.Add(vCert);
       fi;
     od;
-
-
   end;
 
+  func CertificateAsStorage(aCert: AutoObject) :Storage;
+    func ParseToStorage(aVal :String) :Storage;
+      var vSubjects :String[];
+      SplitString(aVal, '=', vSubjects);
+      var vKey :String;
+      var vVal :String;
+      var vSubjectsStorage :Storage = Storage.Create;
+      for var z = 1..LengthOfArray(vSubjects) do
+        vVal = vSubjects[z+1];
+        if vSubjects[z+2] <> nil: -- т.е. vSubjects[z+1] = Value+", "+NextKey
+          vKey = ExtractWord(vVal, -1, ',');
+          vVal = SubStr(vVal, 1, Length(vVal) - Length(vKey) - 1);
+          vVal = ReplaceStrings(vVal, [ '\\', '\/', '\"', '\b', '\t', '\n', '\f', '\r' ], [ '\', '/', '"', chr(8), chr(9), chr(10), chr(12), chr(13) ], true);
+          if UnmaskChar(vVal,'"') <> nil:
+            vVal = UnmaskChar(vVal,'"');
+          fi;
+          vSubjects[z+1] = trim(vKey);
+        else -- vSubjects[z+1] = Value
+          vSubjects[z+1] = '';
+        fi;
+        if vSubjects[z] <> '':
+          vSubjectsStorage[vSubjects[z]] = vVal;
+        fi;
+      od;
+      Return vSubjectsStorage;
+    end;
+    Result = Storage.Create;
+    Result.obj = aCert;
+    Result.Version = aCert.Version;
+    Result.SerialNumber = aCert.SerialNumber;
+    Result.SubjectName = ParseToStorage(aCert.SubjectName as String);
+    Result.IssuerName = ParseToStorage(aCert.IssuerName as String);
+    Result.ValidFromDate = aCert.ValidFromDate;
+    Result.ValidToDate = aCert.ValidToDate;
+    Result.Thumbprint = aCert.Thumbprint;
+  end;
 
 end
