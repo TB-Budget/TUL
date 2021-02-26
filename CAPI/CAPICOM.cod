@@ -347,10 +347,12 @@ end;
           var vSignStore :Storage = Storage.Create;
           vSignStore.Certificate = CertificateAsStorage(vSign.Certificate);
           var vAuthAttrStore :Storage = Storage.Create;
-          for var z = 1..vSign.AuthenticatedAttributes.Count do
-            var Attr :AutoObject = vSign.AuthenticatedAttributes.item[z];
-            vAuthAttrStore[Attr.Name] = Attr.Value;
-          od;
+          if not x64: -- в  CAdESCOM x64 не поддерживается
+            for var z = 1..vSign.AuthenticatedAttributes.Count do
+              var Attr :AutoObject = vSign.AuthenticatedAttributes.item[z];
+              vAuthAttrStore[Attr.Name] = Attr.Value;
+            od;
+          fi;
           vSignStore.AuthenticatedAttributes = vAuthAttrStore;
           if ByCAdESCOM: --https://docs.cryptopro.ru/cades/reference/cadescom/cadescom_interface/icpsigner3
             try
