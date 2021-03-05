@@ -344,6 +344,136 @@ inclass
     res  = scan(JSON, idx);
     return res[1];
   end;
+
+--Encoder
+  func enc_slash(special:String):String;
+    if special = '"' then
+       return '"';
+    elsif special = '\' then
+       return "\";
+    elsif special = '/' then
+       return "/";
+    elsif special = chr(12) then
+       return 'f';
+    elsif special = chr(10) then
+       return 'n';
+    elsif special = chr(13) then
+       return 'r';
+    elsif special = chr(08) then
+       return 'b';
+    elsif special = chr(09) then
+       return 't';
+    end;
+  end;
+  func Hex4(i: Integer):String;
+    Result = Str(i,'$$$$');
+    if Length(Result) = 4 then
+      return Result;
+    elsif Length(Result) = 3 then
+      Result = '0'+Result;
+    elsif Length(Result) = 2 then
+      Result = '00'+Result;
+    fi;
+  end;
+
+  func encode_string(s:String; AlwaysUni:Logical=False):String;
+  var ToSlash:String;
+  var p:Integer;
+  var i:Integer;
+  var c: String;
+    ToSlash = '"'+ '\' + "/" + chr(12) + chr(10) + chr(13) + chr(08) + chr(09);
+    Result = '"';
+    if AlwaysUni then
+      for i = 1 .. Length(s) do
+        c = Substr(s, i, 1);
+        if Pos(c, ToSlash) > 0 then
+          Result = Result + '\' + enc_slash(c);
+        elsif ord(c) > 127:
+          Result = Result + '\u' + Hex4(ord(c));
+        else
+          Result = Result + c;
+        fi;
+      od;
+    else
+      p = CharPos(ToSlash, s);
+      while p > 0 do
+        Result = Result + Substr(s, 1, p - 1);
+        Result = Result + '\' + enc_slash(Substr(s, p, 1));
+        s = Substr(s, p + 1, length(s));
+        p = CharPos(ToSlash, s);
+      end;
+      Result = Result + s;
+    fi;
+    Result = Result + '"';
+    --TODO: unicode symbols
+  end;
+
+  func encode_int(i:Integer):String;
+    Result = Str(i);
+  end;
+
+  func encode_num(n:Numeric):String;
+    --TODO: сделать точнее!!!
+    Result = Str(n);
+  end;
+
+  func encode_bool(b:Logical):String;
+    if b then
+      return "true";
+    else
+      return "false";
+    fi;
+  end;
+
+  func encode_storage(s:Storage;  AlwaysUni:Logical=False):String;
+  var i: Integer;
+    Result = "{";
+    for i = 1..s.Count do
+      Result = Result + encode_string(s.IndexByNumber[i], AlwaysUni) + ':' ;
+      Result = Result + Encode(s.ItemsByNumber[i], AlwaysUni);
+      if i <> s.Count then
+        Result = Result + ',';
+      fi;
+    end;
+    Result = Result + "}";
+  end;
+
+  func encode_array(a:Variant[]; AlwaysUni:Logical=False):String;
+  var i: Integer;
+    Result = "[";
+    for i = 1..LengthOfArray(a) do
+      Result = Result + Encode(a[i], AlwaysUni);
+      if i <> LengthOfArray(a) then
+        Result = Result + ',';
+      fi;
+    end;
+    Result = Result + "]";
+  end;
+
+  func Encode(obj:Variant; AlwaysUni:Logical=False): String;
+    if varType(obj) = varString then
+      return encode_string(obj, AlwaysUni);
+    elsif varType(obj) = VarInteger then
+      return encode_int(obj);
+    elsif varType(obj) = VarNumeric then
+      return encode_num(obj);
+    elsif varType(obj) = VarLogical then
+      return encode_bool(obj);
+    elsif varType(obj) = VarObject then
+      if obj is Storage then
+        return encode_storage(obj, AlwaysUni);
+      else
+        SetError(9918, "Unable to encode " + str(obj));
+      fi;
+    elsif varType(obj) = VarArray then
+      return encode_array(obj, AlwaysUni);
+    elsif varType(obj) = VarNull then
+      return 'null';
+    else
+      SetError(9918, "Unable to encode " + str(obj));
+    fi;
+  end;
+
 inobject
 
 end
