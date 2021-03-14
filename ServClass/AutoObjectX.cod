@@ -6,7 +6,8 @@ class "Базовая обертка над AutoObject";
 inclass public
 
 var x64 :Logical := ProcessInfo.x64;
-var ExistMSScriptControl :Logical := CheckMSScriptControl;
+var ExistMSScriptControl :Logical := Tul.AutoObjectX._ExistMSScriptControl; -- для разового вычисления в любом из наследников
+var _ExistMSScriptControl :Logical := Tul.AutoObjectX.CheckMSScriptControl;
 func CheckMSScriptControl :Logical;
   try
     Result = AutoObject.Create("MSScriptControl.ScriptControl") <> nil;
@@ -54,6 +55,9 @@ func Create :AutoObjectX;
   Result = CreateEx;
 end;
 
+func CreateBase :AutoObjectX;
+  Result = inherited Create;
+end;
 
 
 #Help `Получаем Storage с именами полей совпадающими с именами полей _AutoObject
@@ -106,6 +110,13 @@ end;
     end;
 
     SelfRttiNames :Storage := GetSelfRttiNames;
+
+    #Help `Хранилище процедур для реализации AutoObject.Fld = Val
+             Fld1: proc(AO :AutoObject; Fld :String; Val: Variant)
+             Fld2: proc(AO :AutoObject; Fld :String; Val: Variant)
+              ...
+          `;
+    var _SetComField :Storage := Storage.Create;
 
     inclass public
     #Help `Тип "внешнего" обработчика события GetField`;
@@ -322,14 +333,25 @@ inobject private
       Result = Res;
     fi;
   end;
+
 #if version < 10.4 then
   proc _SetItem(FieldName :String; Param :Variant[] = nil; aValue :Variant);
 #else
   proc _SetItem(aValue :Variant; FieldName :String; Param :Variant[] = nil);
 #end
-    if ExistMSScriptControl:
-      _MSScriptControl_SetComField(FieldName, aValue);
+    -- aValue - новое значение
+    -- FieldName - имя метода или свойства
+    var Fn :Variant = Tul.AutoObjectX._SetComField[FieldName];
+    if not Fn is proc(AO :AutoObject; Fld :String; Val: Variant):
+      Fn = Evaluate('Proc(AO :AutoObject; Fld :String; Val: Variant) AO.'+FieldName+'= Val; end');
+      Tul.AutoObjectX._SetComField[FieldName] = Fn;
     fi;
+    var FnSetComField :proc(AO :AutoObject; Fld :String; Val: Variant) = Fn as proc(AO :AutoObject; Fld :String; Val: Variant);
+    FnSetComField(_AutoObject, FieldName, aValue);
+
+--    if ExistMSScriptControl:
+--      _MSScriptControl_SetComField(FieldName, aValue);
+--    fi;
   end;
 ---------------- блок поддержки для _SetItems --------------
 
