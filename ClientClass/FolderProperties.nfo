@@ -4,4 +4,6 @@
   <Item Name="Constants"/>
   <Item Name="Profile"/>
   <Item Name="DynamicCommand"/>
+  <Item Name="LoopTimer"/>
+  <Item Name="extSimpleXML"/>
 </Items>
