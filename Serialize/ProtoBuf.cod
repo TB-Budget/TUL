@@ -15,7 +15,7 @@
 
 class "Google Protocol Buffers";
 --Экземпляры класса являются структурами, описывающими формат данных
---Распаковка производится методами класса
+--Распаковка/распаковка производятся методами класса
 
 import Classes Коллекция.Методы;
 
@@ -36,6 +36,19 @@ inclass
    end;
  end;
 
+ proc EncodeVarint(data: BinaryObject; value :Variant);
+   var w = value as Int64 and 0x7F;
+   data.Size = data.Size + 1;
+   value = Div(value, 128);
+   while value > 0 do
+     data.Bytes[data.Size] = w + 128;
+     data.Size = data.Size + 1;
+     w = value as Int64 and 0x7F;
+     value = Div(value, 128);
+   end;
+   data.Bytes[data.Size] = w;
+ end;
+
  func DecodeVarintS(data: BinaryObject; var p: Integer) :Variant;
  var Res: Int64;
    Res = DecodeVarint(data, p);
@@ -44,10 +57,22 @@ inclass
    return Res * if(sig, -1, 1);
  end;
 
+ proc EncodeVarintS(data: BinaryObject; value :Variant);
+   value = value * 2;
+   if value < 0 then
+     value = -1 * value - 1;
+   fi;
+   EncodeVarint(data, value);
+ end;
+
  func DecodeLogical(data: BinaryObject; var p: Integer) :Variant;
  var Res: Int64;
    Res = DecodeVarint(data, p);
    return (Res > 0);
+ end;
+
+ proc EncodeLogical(data: BinaryObject; value :Variant);
+   EncodeVarint(data, if(value,1,0));
  end;
 
  func DecodeInt64(data: BinaryObject; var p: Integer) :Variant;
@@ -60,6 +85,17 @@ inclass
    return AsInt64('0x'+Res.AsHex);
  end;
 
+ proc EncodeInt64(data: BinaryObject; value :Variant);
+   var p = data.Size;
+   var tmp = "        ";
+   var point = VarAddr(tmp);
+   WriteMemory(point, value);
+   data.Size = data.Size + 8;
+   for var i = 1..8 do
+     data.Bytes[p + i] = ReadMemory(point+i-1, VarInteger, 1);
+   end;
+ end;
+
  func DecodeInt32(data: BinaryObject; var p: Integer) :Variant;
  var Res = BinaryObject.Create;
    Res.Size = 4;
@@ -68,6 +104,17 @@ inclass
      p = p + 1;
    od;
    return AsInt('0x'+Res.AsHex); --TODO: unsigned!!!
+ end;
+
+ proc EncodeInt32(data: BinaryObject; value :Variant);
+   var p = data.Size;
+   var tmp = "        ";
+   var point = VarAddr(tmp);
+   WriteMemory(point, value);
+   data.Size = data.Size + 4;
+   for var i = 1..4 do
+     data.Bytes[p + i] = ReadMemory(point+i-1, VarInteger, 1);
+   end;
  end;
 
  func DecodeBytes(data: BinaryObject; var p: Integer) :Variant;
@@ -82,10 +129,27 @@ inclass
    return Res;
  end;
 
+ proc EncodeBytes(data: BinaryObject; value :Variant);
+ var l: Int64;
+   l = value.Size;
+   EncodeVarint(data, l);
+   var p = data.Size;
+   data.Size = data.Size + l;
+   for var i = 1..l do
+     data.Bytes[i + p] = value.Bytes[i];
+   od;
+ end;
+
  func DecodeString(data: BinaryObject; var p: Integer) :Variant;
  var Res :BinaryObject;
    Res = DecodeBytes(data, p);
    return Res.GetString(TextFile.UTF8);
+ end;
+
+ proc EncodeString(data: BinaryObject; value :Variant);
+ var Res = BinaryObject.Create;
+   Res.SetString(value, TextFile.UTF8);
+   EncodeBytes(data, Res);
  end;
 
  func GetDecoder(typ: Variant): func(data: BinaryObject; var p: Integer) :Variant;
@@ -110,21 +174,61 @@ inclass
    fi;
  end;
 
- proc CheckType(type_code :Integer; type_desc :Variant; repeated :String);
+ func GetEncoder(typ: Variant): proc(data: BinaryObject; value :Variant);
+--0       Varint  int32, int64, uint32, uint64, sint32, sint64, bool, enum
+--1       64-bit  fixed64, sfixed64, !!double
+--2       Length-delimited         bytes, embedded messages, string,!!  packed repeated fields
+--5       32-bit  fixed32, sfixed32, !!float
+   if typ IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum'] then
+     return @EncodeVarint; --sign???
+   elsif typ IN ['sint32', 'sint64', -99] then       -- -99 - багфикс на механизм сравнения
+     return @EncodeVarintS;
+   elsif typ IN ['bool', -99] then       -- -99 - багфикс на механизм сравнения
+     return @EncodeLogical;
+   elsif typ IN [1, 'fixed64', 'sfixed64'] then
+     return @EncodeInt64;
+   elsif typ IN [2, 'bytes'] then
+     return @EncodeBytes;
+   elsif typ IN ['string', -99] then
+     return @EncodeString;
+   elsif typ IN [5, 'fixed32', 'sfixed32'] then
+     return @EncodeInt32;
+   fi;
+ end;
+
+ func CheckType(type_code :Integer; type_desc :Variant; repeated :String) :Logical;
    if type_desc is ProtoBuf:
      if type_code <> 2 then
-       SetError(9901, 'Несоответствие типов описания и данных');
+       return False;
      fi;
    --TODO: Packed!
    elsif type_desc IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum','sint32', 'sint64','bool'] and type_code <> 0:
-       SetError(9901, 'Несоответствие типов описания и данных');
+       return False;
    elsif type_desc IN [1, 'fixed64', 'sfixed64', 'double'] and type_code <> 1:
-       SetError(9901, 'Несоответствие типов описания и данных');
+       return False;
    elsif type_desc IN [2, 'bytes', 'string'] and type_code <> 2:
-       SetError(9901, 'Несоответствие типов описания и данных');
+       return False;
    elsif type_desc IN [5, 'fixed32', 'sfixed32', 'float'] and type_code <> 5:
-       SetError(9901, 'Несоответствие типов описания и данных');
+       return False;
    fi;
+   return True;
+ end;
+
+ func GetType(type_desc :Variant; repeated :String) :Integer;
+   if type_desc is ProtoBuf:
+     return 2;
+   --TODO: Packed!
+   elsif type_desc IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum','sint32', 'sint64', 'bool']:
+     return 0;
+   elsif type_desc IN [1, 'fixed64', 'sfixed64', 'double']:
+     return 1;
+   elsif type_desc IN [2, 'bytes', 'string']:
+     return 2;
+   elsif type_desc IN [5, 'fixed32', 'sfixed32', 'float']:
+     return 5;
+   fi;
+   SetError(9902, "Неизвестный тип protobuf " + type_desc);
+   return -1;
  end;
 
  func DecodeStruct (data :BinaryObject; var p :Integer; proto :ProtoBuf = nil; maxl :Integer=-1) :Object;
@@ -148,7 +252,9 @@ inclass
        fname = proto.FNames[field_n];
      fi;
      if proto <> nil and proto.FTypes[field_n] <> nil then
-       CheckType(typ, proto.FTypes[field_n], proto.FRepeat[field_n]);
+       if not CheckType(typ, proto.FTypes[field_n], proto.FRepeat[field_n]):
+         SetError(9901, 'Несоответствие типов описания и данных при считывании поля '+fname);
+       fi;
        if proto.FTypes[field_n] is ProtoBuf  then
          var l = Int64(DecodeVarint(data, p));
          val = DecodeStruct(data, p, proto.FTypes[field_n], l);
@@ -186,6 +292,28 @@ inclass
    end;
  end;
 
+ func EncodeStruct (value: Object; proto :ProtoBuf) :BinaryObject;
+ var oneval :Variant;
+ var encoder :proc(data: BinaryObject; value :Variant);
+   Result = BinaryObject.Create;
+   for var i = 1 .. lengthofArray(proto.FNames) do
+     if proto.FNames[i] <> nil and (not value is Storage or value.FieldExists(proto.FNames[i]))then
+       var hdr = i * 8 + GetType(proto.FTypes[i], proto.FRepeat[i]);
+       EncodeVarint(Result, hdr);
+       oneval = value.GetField(proto.FNames[i]);
+       #Warning "TODO: repeated ";
+       if proto.FTypes[i] is ProtoBuf then
+         oneval = EncodeStruct(oneval, proto.FTypes[i]);
+         encoder = @EncodeBytes;
+       else
+         encoder = GetEncoder(proto.FTypes[i]);
+       fi;
+       encoder(Result, oneval);
+
+     fi;
+   od;
+
+ end;
 
 inobject
   var FNames[]:String;
