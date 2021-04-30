@@ -63,7 +63,7 @@ inclass
  func DecodeInt32(data: BinaryObject; var p: Integer) :Variant;
  var Res = BinaryObject.Create;
    Res.Size = 4;
-   for var i = 1..8 do
+   for var i = 1..4 do
      Res.Bytes[5-i] = data.Bytes[p];
      p = p + 1;
    od;
@@ -91,7 +91,7 @@ inclass
  func GetDecoder(typ: Variant): func(data: BinaryObject; var p: Integer) :Variant;
 --0       Varint  int32, int64, uint32, uint64, sint32, sint64, bool, enum
 --1       64-bit  fixed64, sfixed64, !!double
---2       Length-delimited         bytes, embedded messages, !! string, packed repeated fields
+--2       Length-delimited         bytes, embedded messages, string,!!  packed repeated fields
 --5       32-bit  fixed32, sfixed32, !!float
    if typ IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum'] then
      return @DecodeVarint; --sign???
