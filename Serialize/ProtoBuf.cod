@@ -1,0 +1,201 @@
+﻿--Turbo Utilities Library (c) Златовратский Павел(ТБ.Бюджет), 2021
+--Данный проект является свободным программным обеспечением. Вы вправе распространять его
+--и/или модифицировать в соответствии с условиями версии 2.1 либо по вашему выбору с условиями
+--более поздней версии Стандартной Общественной Лицензии Ограниченного Применения GNU,
+--опубликованной Free Software Foundation.
+
+--Мы распространяем этот проект в надежде на то, что он будет вам полезен, однако
+--НЕ ПРЕДОСТАВЛЯЕМ НА НЕГО НИКАКИХ ГАРАНТИЙ, в том числе ГАРАНТИИ ТОВАРНОГО СОСТОЯНИЯ ПРИ ПРОДАЖЕ
+--и ПРИГОДНОСТИ ДЛЯ ИСПОЛЬЗОВАНИЯ В КОНКРЕТНЫХ ЦЕЛЯХ. Для получения более подробной информации
+--ознакомьтесь со Стандартной Общественной Лицензией Ограниченного Применений GNU.
+
+--Вместе с данным проектом вы должны были получить экземпляр Стандартной Общественной Лицензии
+--Ограниченного Применения GNU. Если вы его не получили, сообщите об этом в Software Foundation, Inc.,
+--59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+class "Google Protocol Buffers";
+--Экземпляры класса являются структурами, описывающими формат данных
+--Распаковка производится методами класса
+
+import Classes Коллекция.Методы;
+
+inclass
+ func DecodeVarint(data: BinaryObject; var p: Integer) :Variant;
+ var shift: Integer;
+ var Res: Int64;
+   shift = 0;
+   Res = 0;
+   while true do
+     var byte = data.Bytes[p];
+     p = p + 1;
+     Res = Res + (byte and 0x7f) * Int(Power(2, shift));
+     if (byte and 0x80) = 0 then
+       return Res;
+     fi;
+     shift = shift + 7;
+   end;
+ end;
+
+ func DecodeVarintS(data: BinaryObject; var p: Integer) :Variant;
+ var Res: Int64;
+   Res = DecodeVarint(data, p);
+   var sig = (Res and 0x01) = 1;
+   Res = Div(Res, 2);
+   return Res * if(sig, -1, 1);
+ end;
+
+ func DecodeLogical(data: BinaryObject; var p: Integer) :Variant;
+ var Res: Int64;
+   Res = DecodeVarint(data, p);
+   return (Res > 0);
+ end;
+
+ func DecodeInt64(data: BinaryObject; var p: Integer) :Variant;
+ var Res = BinaryObject.Create;
+   Res.Size = 8;
+   for var i = 1..8 do
+     Res.Bytes[9-i] = data.Bytes[p];
+     p = p + 1;
+   od;
+   return AsInt64('0x'+Res.AsHex);
+ end;
+
+ func DecodeInt32(data: BinaryObject; var p: Integer) :Variant;
+ var Res = BinaryObject.Create;
+   Res.Size = 4;
+   for var i = 1..8 do
+     Res.Bytes[5-i] = data.Bytes[p];
+     p = p + 1;
+   od;
+   return AsInt('0x'+Res.AsHex); --TODO: unsigned!!!
+ end;
+
+ func DecodeBytes(data: BinaryObject; var p: Integer) :Variant;
+ var l: Int64;
+ var Res = BinaryObject.Create;
+   l = DecodeVarint(data, p);
+   Res.Size = l;
+   for var i = 1..l do
+     Res.Bytes[i] = data.Bytes[p];
+     p = p + 1;
+   od;
+   return Res;
+ end;
+
+ func DecodeString(data: BinaryObject; var p: Integer) :Variant;
+ var Res :BinaryObject;
+   Res = DecodeBytes(data, p);
+   return Res.GetString(TextFile.UTF8);
+ end;
+
+ func GetDecoder(typ: Variant): func(data: BinaryObject; var p: Integer) :Variant;
+--0       Varint  int32, int64, uint32, uint64, sint32, sint64, bool, enum
+--1       64-bit  fixed64, sfixed64, !!double
+--2       Length-delimited         bytes, embedded messages, !! string, packed repeated fields
+--5       32-bit  fixed32, sfixed32, !!float
+   if typ IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum'] then
+     return @DecodeVarint; --sign???
+   elsif typ IN ['sint32', 'sint64', -99] then       -- -99 - багфикс на механизм сравнения
+     return @DecodeVarintS;
+   elsif typ IN ['bool', -99] then       -- -99 - багфикс на механизм сравнения
+     return @DecodeLogical;
+   elsif typ IN [1, 'fixed64', 'sfixed64'] then
+     return @DecodeInt64;
+   elsif typ IN [2, 'bytes'] then
+     return @DecodeBytes;
+   elsif typ IN ['string', -99] then
+     return @DecodeString;
+   elsif typ IN [5, 'fixed32', 'sfixed32'] then
+     return @DecodeInt32;
+   fi;
+ end;
+
+ proc CheckType(type_code :Integer; type_desc :Variant; repeated :String);
+   if type_desc is ProtoBuf:
+     if type_code <> 2 then
+       SetError(9901, 'Несоответствие типов описания и данных');
+     fi;
+   --TODO: Packed!
+   elsif type_desc IN [0, 'int32', 'int64', 'uint32', 'uint64', 'enum','sint32', 'sint64','bool'] and type_code <> 0:
+       SetError(9901, 'Несоответствие типов описания и данных');
+   elsif type_desc IN [1, 'fixed64', 'sfixed64', 'double'] and type_code <> 1:
+       SetError(9901, 'Несоответствие типов описания и данных');
+   elsif type_desc IN [2, 'bytes', 'string'] and type_code <> 2:
+       SetError(9901, 'Несоответствие типов описания и данных');
+   elsif type_desc IN [5, 'fixed32', 'sfixed32', 'float'] and type_code <> 5:
+       SetError(9901, 'Несоответствие типов описания и данных');
+   fi;
+ end;
+
+ func DecodeStruct (data :BinaryObject; var p :Integer; proto :ProtoBuf = nil; maxl :Integer=-1) :Object;
+   var val :Variant;
+   if proto = nil then
+     Result = Storage.Create;
+   else
+     Result = proto.TgtClass.Create;
+   fi;
+   if maxl = -1 then
+     maxl = data.Size;
+   else
+     maxl = maxl + p;
+   fi;
+   while p < maxl do
+     var hdr = Int64(DecodeVarint(data, p));
+     var typ = hdr and 0x07;
+     var field_n = Div(hdr, 8);
+     var fname = Str(field_n);
+     if proto <> nil and proto.FNames[field_n] <> nil then
+       fname = proto.FNames[field_n];
+     fi;
+     if proto <> nil and proto.FTypes[field_n] <> nil then
+       CheckType(typ, proto.FTypes[field_n], proto.FRepeat[field_n]);
+       if proto.FTypes[field_n] is ProtoBuf  then
+         var l = Int64(DecodeVarint(data, p));
+         val = DecodeStruct(data, p, proto.FTypes[field_n], l);
+       else
+         val = GetDecoder(proto.FTypes[field_n])(data, p);
+       fi;
+     else
+       val = GetDecoder(typ)(data, p);
+     fi;
+     --repeated
+     if Result is Storage and Result.FieldExists(fname) then
+       var tmparr: Variant[];
+       if varType(Result.GetField(fname)) = VarArray then
+         tmparr = Result.GetField(fname) as Variant[];
+         AddInArray(tmparr, val);
+         Result.SetField(fname, tmparr);
+       else
+         tmparr = [];
+         tmparr[1] = Result.GetField(fname);
+         tmparr[2] = val;
+         Result.SetField(fname, tmparr);
+       fi;
+     elsif proto<> nil and proto.FRepeat[field_n] = 'repeated':
+       if proto.TgtClass = Storage then
+         Result.SetField(fname, [val]);
+       else
+         var tmparr: Variant[];
+         tmparr = Result.GetField(fname) as Variant[];
+         AddInArray(tmparr, val);
+         Result.SetField(fname, tmparr);
+       fi;
+     else
+       Result.SetField(fname, val);
+     fi;
+   end;
+ end;
+
+
+inobject
+  var FNames[]:String;
+  var FTypes[]:Variant; --String code|Type object;
+  var FRepeat[]:String; --repeated/packed
+  var TgtClass: Class := Storage;
+
+  proc AddField(typ :Variant; fname :String; id :Integer; repeat :String='');
+    self.FNames[id] = fname;
+    self.FTypes[id] = typ;
+    self.FRepeat[id] = repeat;
+  end;
+end
