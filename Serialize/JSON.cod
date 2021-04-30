@@ -412,6 +412,10 @@ inclass
     Result = Str(i);
   end;
 
+  func encode_int64(i:Int64):String;
+    Result = Str(i);
+  end;
+
   func encode_num(n:Numeric):String;
     --TODO: сделать точнее!!!
     Result = Str(n);
@@ -455,6 +459,8 @@ inclass
       return encode_string(obj, AlwaysUni);
     elsif varType(obj) = VarInteger then
       return encode_int(obj);
+    elsif varType(obj) = VarInt64 then
+      return encode_int64(obj);
     elsif varType(obj) = VarNumeric then
       return encode_num(obj);
     elsif varType(obj) = VarLogical then
@@ -462,6 +468,8 @@ inclass
     elsif varType(obj) = VarObject then
       if obj is Storage then
         return encode_storage(obj, AlwaysUni);
+      elsif obj is BinaryObject then
+        return encode_string(obj.AsBase64, False);
       else
         SetError(9918, "Unable to encode " + str(obj));
       fi;
