@@ -1,6 +1,8 @@
 ﻿class "CAPICOM";
 inclass public
 var x64: Logical := ProcessInfo.x64;
+const CADESCOM_STRING_TO_UCS2LE:Integer = 0x00;
+const CADESCOM_BASE64_TO_BINARY:Integer = 0x01;
 
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_DESCRIPTION = 2;
 --  CAPICOM_AUTHENTICATED_ATTRIBUTE_DOCUMENT_NAME = 1;
@@ -169,6 +171,35 @@ end;
      ,if(aStoreName is String, aStoreName as String, CAPICOM_MY_STORE)
      ,if(aOpenMode is Integer, aOpenMode as Integer, CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED)
      );
+  end;
+
+  func CertToBase64(aCert :Variant) :String;
+    var vCert :AutoObject;
+    if aCert is String: --ByThumbprint
+      vCert = CertByThumbprint(aCert as String);
+    elsif aCert is AutoObject:
+      vCert = aCert;
+    fi;
+    Result = vCert.Export;
+  end;
+
+  func CertToBinDer(aCert :Variant) :BinaryObject;
+    Result = BinaryObject.Create;
+    Result.AsBase64 = CertToBase64(aCert);
+  end;
+
+
+  func DecryptAsBase64(aData :Variant) :String;
+    var envelop :AutoObject = AutoObject.Create("CAdESCOM.CPEnvelopedData");
+    envelop.ContentEncoding  = CADESCOM_BASE64_TO_BINARY;   --CADESCOM_STRING_TO_UCS2LE
+    var EncToken :String;
+    if aData is BinaryObject:
+      EncToken = (aData as BinaryObject).AsBase64;
+    else
+      EncToken = aData as String;
+    fi;
+    envelop.Decrypt(EncToken);
+    Result = envelop.Content;
   end;
 
 
