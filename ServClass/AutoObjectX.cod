@@ -171,9 +171,9 @@ inobject public
 #Help `Вызывается в OnDestroy (перекрывается в наследниках)
        Нужен для "правильной" зачистки всех AutoObject`;
   proc _Clear;
-    if not x64 and _MSScriptControl <> nil:
-      _MSScriptControl.Reset;
-    fi;
+--    if not x64 and _MSScriptControl <> nil:
+--      _MSScriptControl.Reset;
+--    fi;
   end;
 
   proc OnDestroy;
@@ -273,7 +273,7 @@ inobject private
 
   proc _SetValue(aValue :AutoObject);
     _AutoObject = aValue;
-    _MSScriptControl.Run('SetCom', _AutoObject);
+--    _MSScriptControl.Run('SetCom', _AutoObject);
   end;
 
   var _RTTI :Storage := _AutoObjectRTTI(_AutoObject);
@@ -366,57 +366,57 @@ inobject private
   end;
 
 
-  #Help `Объект содержит метод для записи значения
-         в свойство _AutoObject по имени этого свойства
-         (короче - это костыль т.к. ДИЦ не реализовал эту возможность)`;
-  var _MSScriptControl :AutoObject := _MSScriptControl_ini;
-
-  func _MSScriptControl_ini :AutoObject;
-    if not ExistMSScriptControl:
-      return;
-    fi;
-    Result = AutoObject.Create("MSScriptControl.ScriptControl");
-    try
-      Result.Language="vbscript";
-      Result.AddCode
-       (`Option Explicit
-         Public vCom
-         Public vField
-         Public vValue
-         Public vSelf
-         Sub SetComField(aField, aValue)
-           vField = aField
-           if IsObject(aValue) then
-             set vValue = aValue
-             vSelf.ExecuteStatement("set vCom."&vField&"=vValue")
-             set vValue = nothing
-           else
-             vValue = aValue
-             vSelf.ExecuteStatement("vCom."&vField&"=vValue")
-           end if
-         End Sub
-         Sub SetSelf(aSelf)
-           set vSelf = aSelf
-         End Sub
-         Sub SetCom(aCom)
-           set vCom = nothing
-           set vCom = aCom
-         End Sub`
-        );
-      Result.Run('SetSelf', Result); -- ссылку MSScriptControl во внутрь MSScriptControl в поле vSelf
-      if _AutoObject <> nil:
-        Result.Run('SetCom', _AutoObject);
-      fi;
-    except
-    end;
-  end;
-
-  #Help `Костыльный метод записи в свойство _AutoObject нового значения, используя имя свойства`;
-  Proc _MSScriptControl_SetComField(aProp :String; aValue :Variant);
-    if ExistMSScriptControl:
-      _MSScriptControl.Run('SetComField', aProp, aValue);
-    fi;
-  end;
+--  #Help `Объект содержит метод для записи значения
+--         в свойство _AutoObject по имени этого свойства
+--         (короче - это костыль т.к. ДИЦ не реализовал эту возможность)`;
+--  var _MSScriptControl :AutoObject := _MSScriptControl_ini;
+--
+--  func _MSScriptControl_ini :AutoObject;
+--    if not ExistMSScriptControl:
+--      return;
+--    fi;
+--    Result = AutoObject.Create("MSScriptControl.ScriptControl");
+--    try
+--      Result.Language="vbscript";
+--      Result.AddCode
+--       (`Option Explicit
+--         Public vCom
+--         Public vField
+--         Public vValue
+--         Public vSelf
+--         Sub SetComField(aField, aValue)
+--           vField = aField
+--           if IsObject(aValue) then
+--             set vValue = aValue
+--             vSelf.ExecuteStatement("set vCom."&vField&"=vValue")
+--             set vValue = nothing
+--           else
+--             vValue = aValue
+--             vSelf.ExecuteStatement("vCom."&vField&"=vValue")
+--           end if
+--         End Sub
+--         Sub SetSelf(aSelf)
+--           set vSelf = aSelf
+--         End Sub
+--         Sub SetCom(aCom)
+--           set vCom = nothing
+--           set vCom = aCom
+--         End Sub`
+--        );
+--      Result.Run('SetSelf', Result); -- ссылку MSScriptControl во внутрь MSScriptControl в поле vSelf
+--      if _AutoObject <> nil:
+--        Result.Run('SetCom', _AutoObject);
+--      fi;
+--    except
+--    end;
+--  end;
+--
+--  #Help `Костыльный метод записи в свойство _AutoObject нового значения, используя имя свойства`;
+--  Proc _MSScriptControl_SetComField(aProp :String; aValue :Variant);
+--    if ExistMSScriptControl:
+--      _MSScriptControl.Run('SetComField', aProp, aValue);
+--    fi;
+--  end;
 
 
 end
