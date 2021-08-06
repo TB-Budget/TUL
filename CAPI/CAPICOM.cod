@@ -1,5 +1,29 @@
 ﻿class "CAPICOM";
 inclass public
+
+const CADESCOM_HASH_ALGORITHM_CP_GOST_3411               :Integer = 100; -- Алгоритм ГОСТ Р 34.11-94.
+const CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_256      :Integer = 101; -- Алгоритм ГОСТ Р 34.11-2012.
+const CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_256_HMAC :Integer = 111; -- Алгоритм ГОСТ Р 34.11-2012 HMAC.
+const CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_512      :Integer = 102; -- Алгоритм ГОСТ Р 34.11-2012.
+const CADESCOM_HASH_ALGORITHM_CP_GOST_3411_2012_512_HMAC :Integer = 112; -- Алгоритм ГОСТ Р 34.11-2012 HMAC.
+
+const CADESCOM_HASH_ALGORITHM_MD2                        :Integer = 1; -- Алгоритм MD2.
+const CADESCOM_HASH_ALGORITHM_MD4                        :Integer = 2; -- Алгоритм MD4.
+const CADESCOM_HASH_ALGORITHM_MD5                        :Integer = 3; -- Алгоритм MD5.
+const CADESCOM_HASH_ALGORITHM_SHA_256                    :Integer = 4; -- Алгоритм SHA1 с длиной ключа 256 бит.
+const CADESCOM_HASH_ALGORITHM_SHA_384                    :Integer = 5; -- Алгоритм SHA1 с длиной ключа 384 бита.
+const CADESCOM_HASH_ALGORITHM_SHA_512                    :Integer = 6; -- Алгоритм SHA1 с длиной ключа 512 бит.
+const CADESCOM_HASH_ALGORITHM_SHA1                       :Integer = 0; -- Алгоритм SHA1.
+
+
+--Перечисление CADESCOM_CADES_TYPE
+const CADESCOM_CADES_BES            :Integer = 0x01;   -- Тип подписи CAdES BES.
+const CADESCOM_CADES_DEFAULT        :Integer = 0x00;   -- Тип подписи по умолчанию (CAdES-X Long Type 1).
+const CADESCOM_CADES_T              :Integer = 0x05;   -- Тип подписи CAdES T.
+const CADESCOM_CADES_X_LONG_TYPE_1  :Integer = 0x5D;   -- Тип подписи CAdES-X Long Type 1.
+const CADESCOM_PKCS7_TYPE           :Integer = 0xffff; -- Тип подписи PKCS7.
+
+
 var x64: Logical := ProcessInfo.x64;
 const CADESCOM_STRING_TO_UCS2LE:Integer = 0x00;
 const CADESCOM_BASE64_TO_BINARY:Integer = 0x01;
